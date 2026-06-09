@@ -114,8 +114,12 @@ Issue に紐づかない軽微な変更の場合は、`<type>/<短い説明>`（
 
 ## ラベル
 
-Issue / PR には種別を示す type ラベル（`feat` / `fix` / `docs` / `chore` / `ci` / `refactor` / `test`）と、
-必要に応じて優先度ラベル（`P0` / `P1` / `P2`）を付与します。
+Issue には必ず次の 2 種類のラベルを付与します（type と優先度をそれぞれ 1 つ）。
+
+- **type ラベル（必須・1 個）**: 変更の種別。`feat` / `fix` / `docs` / `chore` / `ci` / `refactor` / `test` から 1 つ選ぶ。
+- **優先度ラベル（必須・1 個）**: `P0`（最優先）/ `P1`（高）/ `P2`（中）から 1 つ選ぶ。
+
+PR には type ラベルを付与します（優先度は元 Issue に準ずるため任意）。type は Conventional Commits の `<type>` と揃えます。Issue テンプレート（バグ報告 / 機能リクエスト）は type を自動付与します。
 
 ## ライセンス
 
