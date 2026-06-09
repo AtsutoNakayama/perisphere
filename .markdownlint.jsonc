@@ -1,0 +1,13 @@
+{
+  // markdownlint 設定。ベンダー管理ファイル（.aidlc-rule-details/, instructions/AIDLC.md）は
+  // CI のグロブ対象から外しているため、ここでは自分たちが書く Markdown 向けにルールを調整する。
+  "default": true,
+  // 行長は日本語ドキュメントで頻繁に超過するため無効化
+  "MD013": false,
+  // HTML コメント等を許容（CLAUDE.md の索引メモなど）
+  "MD033": false,
+  // 先頭が H1 でなくてよい（Issue/PR テンプレートは見出しから始まる）
+  "MD041": false,
+  // 同名見出しは兄弟関係でなければ許容
+  "MD024": { "siblings_only": true }
+}
