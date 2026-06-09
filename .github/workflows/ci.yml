@@ -1,0 +1,40 @@
+name: CI
+
+# main を常にグリーンに保つための検証。
+# 現状はアプリコードが無いため Markdown 検証のみ。
+# アプリコード導入後に build / test / lint ジョブを追加する。
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# シークレットは使わない（Fork からの PR でも動作させるため）。
+permissions:
+  contents: read
+
+jobs:
+  markdownlint:
+    name: Markdown lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # ベンダー管理の AI-DLC 文書は対象外。自分たちが書く Markdown のみ検証する。
+      - uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: |
+            README.md
+            CONTRIBUTING.md
+            CLAUDE.md
+            .github/**/*.md
+
+  links:
+    name: Link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # 人間向けドキュメントのリンク切れを検出（相対リンク・外部リンク）。
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --max-retries 3 README.md CONTRIBUTING.md
+          fail: true
