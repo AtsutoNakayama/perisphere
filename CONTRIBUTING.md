@@ -86,7 +86,31 @@ Issue に紐づかない軽微な変更の場合は、`<type>/<短い説明>`（
 - PR 本文に関連 Issue を記載します。`Closes #123` と書くと、マージ時に Issue が自動でクローズされます。
 - PR のタイトルも Conventional Commits の形式に揃えると、履歴が読みやすくなります。
 - マージは **Squash and merge** を基本とし、`main` の履歴を「1 機能 = 1 コミット」に保ちます。
-- CI（整備後）がグリーンであることを確認してください。
+- CI がグリーンであることを確認してください。
+
+## ブランチ保護（main）
+
+`main` は GitHub のブランチ保護（classic）とリポジトリルールセットの組み合わせで保護しています。
+
+### 全員（メンテナ含む）に適用（classic protection）
+
+- `main` への直接 push は禁止。変更は必ず PR 経由でマージします。
+- **必須ステータスチェック**: CI の `Markdown lint` / `Link check`（緑でないとマージ不可）。
+- マージ前にブランチを最新化（strict）。会話（レビューコメント）の解決を必須化。
+- force push / ブランチ削除を禁止。管理者にも適用（enforce_admins）。
+
+### メンテナ以外に追加適用（ルールセット）
+
+- PR には **コードオーナー（メンテナ）の承認が必須**です（必須承認数 1 + Require Code Owners review）。
+- 承認対象は [`.github/CODEOWNERS`](.github/CODEOWNERS) で全パスをメンテナに紐付けています。これにより、メンテナ以外の write 権限者どうしが互いに承認してマージする（結託）ことを防ぎます。
+- メンテナ（管理者ロール）はルールセットの **bypass** に登録されており、承認要件のみ免除されます（自分の PR は自分で承認できないため）。PR + CI の遵守は維持されます。
+
+### 権限に関する注意
+
+- public リポジトリでも write（push / merge）権限はオーナーと招待した collaborator のみが持ちます。一般の人は fork → PR のみで、自分でマージはできません。
+- 共同メンテナを招待する際は、ルールセットの bypass を意図せず広げないよう **`admin` ではなく `write` ロール**で招待してください。
+
+設定は GitHub API（classic: `PUT /repos/{owner}/{repo}/branches/main/protection`、ルールセット: `POST /repos/{owner}/{repo}/rulesets`）で適用しています。
 
 ## ラベル
 

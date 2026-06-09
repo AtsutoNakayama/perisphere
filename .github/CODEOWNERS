@@ -1,0 +1,5 @@
+# コードオーナー定義
+# すべての変更はメンテナ（@AtsutoNakayama）のレビュー・承認を必須とする。
+# main のルールセットで「Require review from Code Owners」を有効化しているため、
+# メンテナ以外の PR はこの承認が無いとマージできない（結託によるマージを防止）。
+* @AtsutoNakayama
