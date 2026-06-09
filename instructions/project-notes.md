@@ -24,3 +24,11 @@
 - `@import` 先は起動時に全文ロードされる。`.aidlc-rule-details/` のような「必要時に読む」大量ファイルは **import しない**（`AIDLC.md` の指示に従いオンデマンドで読む）。
 - `CONTRIBUTING.md` は GitHub に認識させるため **root に置いたまま**にする（移動しない）。`@import` で参照する。
 - CI の markdownlint は **自分たちが書く Markdown のみ**を対象とし、ベンダーの `instructions/AIDLC.md` と `.aidlc-rule-details/` は除外している。`instructions/` に**自作**の md を足すと自動で lint 対象になる（新たに**ベンダー**の md を置く場合は `.github/workflows/ci.yml` の globs に除外（`!`）を追加する）。
+
+## 恒常的な知識・ルールの追加方針
+
+プロジェクトで一貫して Claude Code に把握させたい恒常的な情報（規約・前提・全体に効く文脈）が増えたら、次の基準で記録先を選ぶ。
+
+- **常時必要・簡潔・プロジェクト全体に効く** → 適切な既存 md に追記（貢献ルールは `CONTRIBUTING.md`、運用・構成は本ファイル）、または新規 md を `instructions/` に作成し `CLAUDE.md` に `@import` を1行足す。
+- **特定タスク・特定パスでのみ必要 / 量が多い** → `@import` しない。パススコープルール（`.claude/rules/` の `paths:` frontmatter）や Skill など「必要時のみ読み込む」仕組みを使う。
+- 理由: `@import` 先は**起動時に毎回全文ロード**されコンテキストを消費する（import してもコンテキストは減らない）。常時ロードに値する内容だけを `@import` し、それ以外はオンデマンド機構へ回して起動コンテキストの肥大を防ぐ。
