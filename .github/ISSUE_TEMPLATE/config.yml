@@ -1,0 +1,7 @@
+# 空の Issue も許容する（typo 修正など軽微な報告のため）。
+# CONTRIBUTING.md の「Issue ベース運用」方針に準拠。
+blank_issues_enabled: true
+contact_links:
+  - name: 質問・相談
+    url: https://github.com/AtsutoNakayama/perisphere/discussions
+    about: バグや機能要望ではない質問は Discussions へ（有効化している場合）
