@@ -19,7 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # ベンダー管理の AI-DLC 文書は対象外。自分たちが書く Markdown のみ検証する。
+      # 自分たちが書く Markdown のみ検証する。ベンダー管理の AI-DLC 文書（instructions/AIDLC.md
+      # および .aidlc-rule-details/）は対象外。
       - uses: DavidAnson/markdownlint-cli2-action@v16
         with:
           globs: |
@@ -27,6 +28,8 @@ jobs:
             CONTRIBUTING.md
             CLAUDE.md
             .github/**/*.md
+            instructions/*.md
+            !instructions/AIDLC.md
 
   links:
     name: Link check
