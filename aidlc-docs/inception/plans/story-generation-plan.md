@@ -133,13 +133,13 @@ X) Other（[Answer]: の後に記述）
 
 ## 4. 実行チェックリスト（Part 2: Generation・承認後に実施）
 
-- [ ] `aidlc-docs/inception/user-stories/personas.md` を生成（ペルソナの原型・特性・動機）
-- [ ] `aidlc-docs/inception/user-stories/stories.md` を生成（INVEST 準拠のユーザーストーリー）
-- [ ] 各ストーリーに受け入れ基準を付与（Q4 の記法）
-- [ ] 各ストーリーを要件（FR/NFR）へトレース（追跡表）
-- [ ] ペルソナとストーリーのマッピング
-- [ ] ストーリーが Independent / Negotiable / Valuable / Estimable / Small / Testable を満たすことを確認
-- [ ] `aidlc-state.md` の進捗更新
+- [x] `aidlc-docs/inception/user-stories/personas.md` を生成（ペルソナの原型・特性・動機）
+- [x] `aidlc-docs/inception/user-stories/stories.md` を生成（INVEST 準拠のユーザーストーリー / US-01〜US-37）
+- [x] 各ストーリーに受け入れ基準を付与（Q4 の記法: G/W/T + 箇条書き）
+- [x] 各ストーリーを要件（FR/NFR）へトレース（追跡表 + FR カバレッジ表）
+- [x] ペルソナとストーリーのマッピング（personas.md の Epic マップ + stories.md の主語）
+- [x] ストーリーが Independent / Negotiable / Valuable / Estimable / Small / Testable を満たすことを確認
+- [x] `aidlc-state.md` の進捗更新
 
 ## 5. 生成する成果物（Part 2）
 
