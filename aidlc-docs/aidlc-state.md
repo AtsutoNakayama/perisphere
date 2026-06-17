@@ -6,7 +6,7 @@
 - **Project Name**: perisphere — 360°写真 Web ビューワーライブラリ
 - **Related Issue**: [#21](https://github.com/AtsutoNakayama/perisphere/issues/21)
 - **Start Date**: 2026-06-10T13:12:41Z
-- **Current Stage**: INCEPTION - Requirements Analysis 完了（ユーザー承認: 2026-06-17）→ 次は User Stories
+- **Current Stage**: INCEPTION - User Stories / Part 2 生成中（計画承認: 2026-06-17）
 
 ## Workspace State
 
@@ -35,7 +35,7 @@
 - [x] Workspace Detection（完了: 2026-06-10 / グリーンフィールド判定）
 - [x] Reverse Engineering — スキップ（グリーンフィールドのため対象なし）
 - [x] Requirements Analysis（成果物 `inception/requirements/requirements.md` / 深度: Comprehensive。**ユーザー承認: 2026-06-17**。承認前に FR-01・NFR-01 を修正: 画像サイズの固定上限を撤廃し 8K を動作保証ラインに再定義）
-- [ ] User Stories（次に実施 — ユーザー向け新規ライブラリのため）
+- [~] User Stories（Part 1 計画中 — `plans/user-stories-assessment.md` / `plans/story-generation-plan.md` 作成済み。質問 Q1〜Q7 回答待ち）
 - [ ] Workflow Planning
 - [ ] Application Design（条件付き）
 - [ ] Units Generation（条件付き）
