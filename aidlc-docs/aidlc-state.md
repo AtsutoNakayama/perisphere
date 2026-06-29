@@ -6,7 +6,7 @@
 - **Project Name**: perisphere — 360°写真 Web ビューワーライブラリ
 - **Related Issue**: [#21](https://github.com/AtsutoNakayama/perisphere/issues/21)
 - **Start Date**: 2026-06-10T13:12:41Z
-- **Current Stage**: INCEPTION - User Stories / Part 2 生成完了（成果物レビュー・承認待ち: 2026-06-17）
+- **Current Stage**: INCEPTION - Workflow Planning（実行計画 `inception/plans/execution-plan.md` 作成・承認待ち: 2026-06-29）
 
 ## Workspace State
 
@@ -35,14 +35,14 @@
 - [x] Workspace Detection（完了: 2026-06-10 / グリーンフィールド判定）
 - [x] Reverse Engineering — スキップ（グリーンフィールドのため対象なし）
 - [x] Requirements Analysis（成果物 `inception/requirements/requirements.md` / 深度: Comprehensive。**ユーザー承認: 2026-06-17**。承認前に FR-01・NFR-01 を修正: 画像サイズの固定上限を撤廃し 8K を動作保証ラインに再定義）
-- [~] User Stories（Part 1 計画承認済み。Part 2 で `user-stories/personas.md`（P1〜P3）・`user-stories/stories.md`（US-01〜US-37, Epic E1〜E8）生成。**成果物の承認待ち**）
-- [ ] Workflow Planning
-- [ ] Application Design（条件付き）
-- [ ] Units Generation（条件付き）
+- [x] User Stories（Part 1 計画承認済み。Part 2 で `user-stories/personas.md`（P1〜P3）・`user-stories/stories.md`（US-01〜US-37, Epic E1〜E8）生成。**ユーザー承認: 2026-06-29**）
+- [~] Workflow Planning（実行計画 `inception/plans/execution-plan.md` 作成。Application Design = EXECUTE / Units Generation = EXECUTE を推奨。**承認待ち: 2026-06-29**）
+- [ ] Application Design（条件付き → EXECUTE 推奨）
+- [ ] Units Generation（条件付き → EXECUTE 推奨）
 
 ### 🟢 CONSTRUCTION PHASE
 
-（Inception 完了後に計画。Issue #21 のスコープ外 — unit ごとに後続 Issue を起票予定）
+（Issue #21 のスコープ外 — unit ごとに後続 Issue を起票予定。実行計画の暫定推奨: Functional Design / NFR Requirements / NFR Design / Infrastructure Design（minimal）/ Code Generation / Build and Test をいずれも EXECUTE）
 
 ## Notes
 
