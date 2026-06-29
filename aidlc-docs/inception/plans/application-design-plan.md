@@ -22,15 +22,15 @@
 - [x] 1. コンテキスト分析（requirements.md / stories.md を読み、機能領域とコンポーネント境界を抽出）
 - [x] 2. 設計方針の確認質問に回答を得る（本書末尾 Q1〜Q8 / 回答: A,B,C,A,D,A,A,A）
 - [x] 3. 回答の曖昧性・矛盾を分析（矛盾・曖昧なし。clarification 不要と判断）
-- [ ] 4. 成果物生成（承認後）:
-  - [ ] `application-design/components.md`（コンポーネント定義・責務・公開 IF）
-  - [ ] `application-design/component-methods.md`（メソッドシグネチャ・入出力型・概要。詳細ルールは Functional Design）
-  - [ ] `application-design/services.md`（サービス定義・オーケストレーション）
-  - [ ] `application-design/component-dependency.md`（依存マトリクス・通信パターン・データフロー）
-  - [ ] `application-design/application-design.md`（上記を統合した一枚物）
-- [ ] 5. 設計の完全性・一貫性検証（全 FR/NFR・全 US がいずれかのコンポーネント/メソッドにトレースできること）
-- [ ] 6. 拡張ルール（Security / Resiliency / PBT）の該当箇所を設計に反映し、コンプライアンス要約を付す
-- [ ] 7. 完了メッセージ提示 → ユーザー承認 → aidlc-state.md 更新
+- [x] 4. 成果物生成:
+  - [x] `application-design/components.md`（コンポーネント定義・責務・公開 IF / C1〜C18）
+  - [x] `application-design/component-methods.md`（メソッドシグネチャ・入出力型・概要。詳細ルールは Functional Design）
+  - [x] `application-design/services.md`（サービス定義・オーケストレーション / S1〜S7）
+  - [x] `application-design/component-dependency.md`（依存マトリクス・通信パターン・データフロー）
+  - [x] `application-design/application-design.md`（上記を統合した一枚物）
+- [x] 5. 設計の完全性・一貫性検証（FR-01〜18・主要 NFR・US-01〜37 をコンポーネント/サービスへトレース。application-design.md 第4章）
+- [x] 6. 拡張ルール（Security / Resiliency / PBT）の該当箇所を設計に反映し、コンプライアンス要約を付す（application-design.md 第5章）
+- [~] 7. 完了メッセージ提示 → ユーザー承認待ち → aidlc-state.md 更新
 
 ---
 
