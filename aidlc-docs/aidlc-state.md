@@ -6,7 +6,7 @@
 - **Project Name**: perisphere — 360°写真 Web ビューワーライブラリ
 - **Related Issue**: [#21](https://github.com/AtsutoNakayama/perisphere/issues/21)
 - **Start Date**: 2026-06-10T13:12:41Z
-- **Current Stage**: INCEPTION - Units Generation / Part 1（分解計画 `inception/plans/unit-of-work-plan.md` 作成・質問 Q1〜Q6 の回答待ち: 2026-06-29）
+- **Current Stage**: INCEPTION PHASE 完了（Units Generation 承認: 2026-07-20）。Issue #21 スコープの Inception 作業は完了。CONSTRUCTION は unit ごとの後続 Issue で着手予定
 
 ## Workspace State
 
@@ -38,7 +38,9 @@
 - [x] User Stories（Part 1 計画承認済み。Part 2 で `user-stories/personas.md`（P1〜P3）・`user-stories/stories.md`（US-01〜US-37, Epic E1〜E8）生成。**ユーザー承認: 2026-06-29**）
 - [x] Workflow Planning（実行計画 `inception/plans/execution-plan.md` 作成。Application Design = EXECUTE / Units Generation = EXECUTE を推奨。**ユーザー承認: 2026-06-29**）
 - [x] Application Design（設計方針 Q1〜Q8 回答確定: A,B,C,A,D,A,A,A。成果物 `inception/application-design/`（components / component-methods / services / component-dependency / application-design）生成。**ユーザー承認: 2026-06-29**）
-- [~] Units Generation（Part 1 分解計画 `inception/plans/unit-of-work-plan.md` 作成。分解方針質問 Q1〜Q6 の**回答待ち: 2026-06-29**）
+- [x] Units Generation（Part 1: 分解方針質問 Q1〜Q6 回答確定（すべて A）・曖昧性なしと判定・**Part 1 承認: 2026-07-20**。Part 2: `unit-of-work.md`（13 ユニット: In MVP 9 + Future 4）／`unit-of-work-dependency.md`（DAG・循環なし）／`unit-of-work-story-map.md`（US-01〜37 全件網羅）を生成。**ユーザー承認: 2026-07-20**）
+
+**INCEPTION PHASE 完了（2026-07-20）**
 
 ### 🟢 CONSTRUCTION PHASE
 
