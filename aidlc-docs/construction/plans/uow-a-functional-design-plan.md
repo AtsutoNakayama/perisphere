@@ -25,7 +25,7 @@ UoW-A 時点でまだ存在しない他ユニットの機能（画像ロード=U
 - [x] Step 1: ユニットコンテキスト分析（本ファイル冒頭）
 - [x] Step 2〜4: 本計画ファイルの作成・質問埋め込み（本ファイル）
 - [x] Step 5: ユーザー回答の収集・曖昧性分析（推奨セットを承認・全回答が明確な単一選択、曖昧表現なし）
-- [ ] Step 6: 成果物生成（`business-logic-model.md` / `business-rules.md` / `domain-entities.md`）
+- [x] Step 6: 成果物生成（`business-logic-model.md` / `business-rules.md` / `domain-entities.md`）
 - [ ] Step 7〜9: 完了メッセージ提示・承認取得・記録
 
 ## 確認質問
