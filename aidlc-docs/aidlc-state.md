@@ -46,6 +46,15 @@
 
 （Issue #21 のスコープ外 — unit ごとに後続 Issue を起票予定。実行計画の暫定推奨: Functional Design / NFR Requirements / NFR Design / Infrastructure Design（minimal）/ Code Generation / Build and Test をいずれも EXECUTE）
 
+#### UoW-A コア基盤（[#27](https://github.com/AtsutoNakayama/perisphere/issues/27) / ブランチ `feat/27-uow-a-core`）
+
+- [x] Functional Design（成果物 `construction/uow-a/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。**ユーザー承認: 2026-08-02**）
+- [ ] NFR Requirements
+- [ ] NFR Design
+- [ ] Infrastructure Design
+- [ ] Code Generation
+- [ ] Build and Test（全ユニット共通、最後にまとめて実施）
+
 ## Notes
 
 - 監査ログ `aidlc-docs/audit.md` はリポジトリ方針によりローカル限定（`.gitignore` 済み）。
