@@ -27,7 +27,7 @@
 
 - [x] Step 1: Functional Design 成果物の分析（本ファイル冒頭に反映）
 - [x] Step 2〜4: 本計画ファイルの作成・質問埋め込み
-- [ ] Step 5: ユーザー回答の収集・曖昧性分析
+- [x] Step 5: ユーザー回答の収集・曖昧性分析（推奨セットを承認・全回答が明確な単一選択、曖昧表現なし）
 - [ ] Step 6: 成果物生成（`nfr-requirements.md` / `tech-stack-decisions.md`）
 - [ ] Step 7〜9: 完了メッセージ提示・承認取得・記録
 
@@ -47,7 +47,9 @@ C) yarn workspaces（Plug'n'Play 等の選択肢もあるが構成がやや複�
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: `unit-of-work.md` のコード構成戦略（`packages/core`/`packages/react`/`apps/demo`）はモノレポ前提であり、NFR-05（保守性・拡張性）を重視する方針とも合致する厳格な依存管理（phantom dependency 防止）が有利。npm workspaces（B）は追加ツール不要だが依存解決が緩く、yarn workspaces（C）は pnpm に対する明確な優位性が薄い。
 
 ### Question 2: ビルドツール（ESM + 型定義の出力）
 
@@ -61,7 +63,9 @@ C) tsc + 手動 rollup 設定（最も低レベルで制御できるが設定コ
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: NFR-07（ESM + 型定義 + tree-shaking、CDN/UMD 対象外）の要求にライブラリ配布特化のシンプルさで最短距離で応える。Vite ライブラリモード（B）は `apps/demo` 側で別途使えばよく無理に統一する必要はない。tsc + 手動 rollup（C）は UoW-A の規模ではオーバースペック。
 
 ### Question 3: テストランナー
 
@@ -73,7 +77,9 @@ C) Node.js 標準 `node:test`（依存追加なしだが PBT 連携・モック�
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: Q2 で tsup（esbuild ベース）を採用するため、同系統のツールチェーン（Vitest も esbuild/Vite ベース）で揃えられ設定の重複・食い違いを避けられる。Jest（B）は ESM/TypeScript のネイティブ対応が煩雑、`node:test`（C）はエコシステムが薄く fast-check との統合実績も少ない。
 
 ### Question 4: Property-Based Testing ライブラリ（NFR-09・PBT 拡張の全面適用）
 
@@ -83,7 +89,9 @@ B) 他の PBT ライブラリを比較検討する
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: `requirements.md` NFR-09 で既に fast-check が本命として名指しされており、TypeScript エコシステムでの事実上のデファクトであるため覆す積極的理由がない（B の比較検討は対抗馬が実質存在せずコストに見合わない）。
 
 ### Question 5: WebGL 実描画のテスト戦略
 
@@ -95,7 +103,9 @@ B) `headless-gl` 等のネイティブ WebGL 実装を CI に導入し、Node �
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: UoW-A の対応ストーリー（US-06 等）の受け入れ基準検証は本質的にブラウザでの見た目確認を要する性質のもの。ユニットテストでは「正しい three.js API 呼び出し・パラメータで初期化しているか」という契約レベルの検証に留め、CI の安定性を優先する。`headless-gl`（B）はネイティブビルド依存が増え、WebGL2 対応が不完全/開発停滞気味という既知の懸念がある。実描画確認は Build and Test ステージ（UoW-I のデモサイト等）で別途扱う。
 
 ### Question 6: Lint / フォーマッタ
 
@@ -105,7 +115,9 @@ B) Biome（Rust 製で高速・設定統一だが、ESLint ほどプラグイン
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: OSS ライブラリとして外部コントリビューターを迎える前提（`CONTRIBUTING.md`）を踏まえ、最も普及したツールを使うほうがコントリビューターのエディタ設定・学習コストが低い。Biome（B）は単一ツールで高速だが、プラグインエコシステムが ESLint ほど成熟していない。
 
 ### Question 7: TypeScript strictness
 
@@ -115,7 +127,9 @@ B) 段階的に strict オプションを有効化していく
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: グリーンフィールドであり段階導入の必要がない。最初から `strict: true` にすることで、後から有効化する際の大量の型エラー修正という手戻りコスト（B のデメリット）を避けられる。ライブラリコードは利用者の型安全性に直結するため最大化するメリットが大きい。
 
 ### Question 8: three.js の対応バージョン範囲（peerDependencies、NFR-06）
 
@@ -125,7 +139,9 @@ B) 開発時に検証した特定バージョンのみに限定する狭い範�
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: `NFR-06` の peerDependencies 化の目的自体が「利用者側の three.js を尊重する」ことにあるため、範囲を広く取るほど既存プロジェクトへの導入障壁が下がり NFR-06 の意図と整合する。狭い範囲（B）は three.js の頻繁なマイナー更新への追従負荷が大きく、peerDependencies の思想にも反する。
 
 ### Question 9: 依存脆弱性スキャンの CI 統合（NFR-10 サプライチェーン対策）
 
@@ -137,7 +153,9 @@ C) 両方（Dependabot + CI 監査ステップ）
 
 D) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: C
+
+**採用理由**: `NFR-10` は「依存脆弱性スキャンの CI 組み込み」を明記しており、Dependabot 単体（A）では GitHub 側のスキャン頻度に依存し「CI 組み込み」の要求を厳密には満たさない。CI 監査ステップ（B）だけでは既知脆弱性の自動更新 PR が得られない。両方を組み合わせることで NFR-10 の文言により正確に応える。
 
 ### Question 10: ビルド出力のトランスパイルターゲット
 
@@ -149,8 +167,19 @@ B) より広い互換性のため ES2017 等の低めのターゲットにする
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: `NFR-02` が対象を「最新世代」ブラウザに明示的に絞っているため、それを超える互換性投資（B）は要件に基づかない過剰実装であり、不要なポリフィル/変換コストとバンドルサイズ増を避けられる。
 
 ## 回答後の進め方
 
 全質問回答後、曖昧・矛盾がないか分析し、必要なら `uow-a-nfr-requirements-clarification-questions.md` を作成する。問題なければ Step 6 の成果物生成（`nfr-requirements.md` / `tech-stack-decisions.md`）に進む。
+
+## 回答決定プロセスの記録（比較検討サマリ）
+
+各質問はユーザー提示の「推奨セット」をそのまま採用（Q1=A, Q2=A, Q3=A, Q4=A, Q5=A, Q6=A, Q7=A, Q8=A, Q9=C, Q10=A）。決定にあたり比較した選択肢ごとの長所・短所は各質問直下の「採用理由」に記録した通り。判断軸として一貫して優先したのは:
+
+1. **既存 NFR（NFR-02, 05, 06, 07, 09, 10）との整合**
+2. **ツールチェーンの一貫性**（tsup/Vitest 等 esbuild/Vite 系で統一し設定の食い違いを避ける）
+3. **OSS としての開放性**（外部コントリビューターの学習コストを下げる、普及度の高いツールを優先）
+4. **CI の安定性**（ネイティブ依存を避け、jsdom + モック境界でテストを完結させる）
