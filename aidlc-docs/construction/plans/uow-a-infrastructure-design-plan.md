@@ -20,7 +20,7 @@
 
 - [x] Step 1: Functional Design / NFR Design 成果物の分析（上表に反映）
 - [x] Step 2〜4: 本計画ファイルの作成・質問埋め込み
-- [ ] Step 5: ユーザー回答の収集・曖昧性分析
+- [x] Step 5: ユーザー回答の収集・曖昧性分析（推奨案を全問採用・曖昧表現なし）
 - [ ] Step 6: 成果物生成（`infrastructure-design.md` / `deployment-architecture.md`）
 - [ ] Step 7〜9: 完了メッセージ提示・承認取得・記録
 
@@ -37,7 +37,7 @@
 
 **推奨: A**。既存ファイルのコメントが本ステージの作業を想定して書かれており、素直にそれに従う。
 
-[Answer]: 
+[Answer]: A
 
 ### Question 2: CI 上の Node.js バージョン方針
 
@@ -48,7 +48,7 @@
 
 **推奨: A**。成果物（`@perisphere/core`）はブラウザで実行され、Node.js は開発/CI 時のビルド・テストツールチェーンとしてのみ使われる（NFR-02 はブラウザ環境の話で Node.js バージョンとは無関係）。ツールチェーン自体の Node.js 互換性リスクは低く、マトリクス化の運用コストに見合わない。
 
-[Answer]: 
+[Answer]: A
 
 ### Question 3: GitHub Actions のバージョン固定方針（SECURITY-10）
 
@@ -59,7 +59,7 @@
 
 **推奨: A**。既存 `ci.yml`（`actions/checkout@v4`, `DavidAnson/markdownlint-cli2-action@v16`, `lycheeverse/lychee-action@v2`）と一貫した方式を維持する。SECURITY-10 の「pinned tool versions」はメジャータグ固定でも満たせる（`latest` を使わないことが本質）。
 
-[Answer]: 
+[Answer]: A
 
 ### Question 4: Dependabot 設定
 
@@ -70,7 +70,7 @@
 
 **推奨: A**。`NFR-10` のサプライチェーン対策は依存関係（npm パッケージ）だけでなく CI/CD ツール自体のバージョン管理も要求しており、`github-actions` エコシステムも対象に含めるべき。
 
-[Answer]: 
+[Answer]: A
 
 ### Question 5: npm 公開パイプラインの本ユニットでの扱い
 
@@ -81,7 +81,7 @@
 
 **推奨: A**。`requirements.md` NFR-11 が既に「正式版リリース時の運用詳細は Construction のリリース設計で確定する」と明記しており、UoW-A の Infrastructure Design で先取りする理由がない。
 
-[Answer]: 
+[Answer]: A
 
 ### Question 6: CI ジョブのユニット追加への拡張性（Shared Infrastructure）
 
@@ -94,8 +94,17 @@
 
 **推奨: A**。UoW-A は今後 12 ユニットが積み上がっていく基盤であり、CI 設定を最初からワークスペース全体対応にしておくことで、後続ユニットの Infrastructure Design/Code Generation で毎回同じ変更を繰り返さずに済む。
 
-[Answer]: 
+[Answer]: A
 
 ## 回答後の進め方
 
 全質問回答後、曖昧・矛盾がないか分析し、必要なら `uow-a-infrastructure-design-clarification-questions.md` を作成する。問題なければ Step 6 の成果物生成（`infrastructure-design.md` / `deployment-architecture.md`）に進む。
+
+## 回答決定プロセスの記録（比較検討サマリ）
+
+Q1〜Q6 全問で推奨案（A）を採用。決定にあたり比較した選択肢ごとの長所・短所は各質問直下の表に記録した通り。判断軸として一貫して優先したのは:
+
+1. **既存資産との一貫性**（`ci.yml` の既存コメント・Actions バージョン固定方式を踏襲）
+2. **時期尚早な整備の回避**（npm 公開パイプラインは NFR-11 が指すリリース設計まで持ち越す）
+3. **将来ユニットへの拡張性**（`pnpm -r` によるワークスペース全体対応で、後続ユニットが CI 設定を都度触らずに済む形にする）
+4. **NFR-10（サプライチェーン対策）との整合**（Dependabot は npm + github-actions の両方を対象にする）
