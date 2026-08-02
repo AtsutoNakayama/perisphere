@@ -19,7 +19,7 @@
 - [x] Step 1: NFR Requirements 成果物の分析（上表に反映）
 - [x] Step 2〜4: 本計画ファイルの作成・質問埋め込み
 - [x] Step 5: ユーザー回答の収集・曖昧性分析（推奨セットを承認・全回答が明確な単一選択、曖昧表現なし）
-- [ ] Step 6: 成果物生成（`nfr-design-patterns.md` / `logical-components.md`）
+- [x] Step 6: 成果物生成（`nfr-design-patterns.md` / `logical-components.md`）
 - [ ] Step 7〜9: 完了メッセージ提示・承認取得・記録
 
 ## 確認質問
