@@ -18,7 +18,7 @@
 
 - [x] Step 1: NFR Requirements 成果物の分析（上表に反映）
 - [x] Step 2〜4: 本計画ファイルの作成・質問埋め込み
-- [ ] Step 5: ユーザー回答の収集・曖昧性分析
+- [x] Step 5: ユーザー回答の収集・曖昧性分析（推奨セットを承認・全回答が明確な単一選択、曖昧表現なし）
 - [ ] Step 6: 成果物生成（`nfr-design-patterns.md` / `logical-components.md`）
 - [ ] Step 7〜9: 完了メッセージ提示・承認取得・記録
 
@@ -36,7 +36,9 @@ B) 状態変化時のみ再描画（dirty flag 方式）。バッテリー効率
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: UoW-A 単体では静的な標準ビューしか対象にならず、今 dirty flag の判定基準を精緻に設計しても後続ユニット（UoW-D 等）統合時に手戻りが起きやすい。まず単純な実装で「滑らかさ」（NFR-01）を優先し、電力最適化が実測で問題になった時点で dirty flag 化を再検討する。
 
 ### Question 2: コンテキストロスト復帰のパターン形式（Resilience）
 
@@ -48,7 +50,9 @@ B) シンプルな一度きりのブールフラグ（`hasAttemptedRecovery`）�
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: BR-A-12 で「1 回だけ試行」という業務ルールは確定済みだが、その実装の"形"は `unit-of-work-dependency.md` で UoW-A が全ユニットの根とされる基盤コンポーネントとして長く参照される。最初から状態を可視化しておくコストは小さく、テスト（PBT を含む）とも相性が良い。
 
 ### Question 3: リソース再生成 vs プーリング（Performance / コンテキストロスト復帰時）
 
@@ -60,7 +64,9 @@ B) 再利用可能なオブジェクトプールを用意し、破棄せず使�
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: プーリングは「頻繁に生成/破棄されるオブジェクトが多数ある」場合に効くパターンだが、UoW-A の描画対象はプレースホルダの球体メッシュ 1 個のみで対象がほぼない。画像テクスチャ等プーリングの価値が出る要素は UoW-B 以降で導入される。時期尚早な最適化を避ける。
 
 ### Question 4: `EventBus` ハンドラ登録の防御的上限（Security / 誤用防止）
 
@@ -72,7 +78,9 @@ B) 一定数（例: イベント種別ごとに 100 件）を超えたら `conso
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: この上限は「外部攻撃者から保護するセキュリティ境界」ではなく「呼び出し元自身の実装ミスに対する開発者向けヒント」に過ぎない。UoW-A はサーバーではなくクライアントライブラリであり、悪意ある第三者が `on()` を呼べる経路（＝攻撃面）がそもそも存在しない。SECURITY-11 の「誤用ケースの考慮」は主に入力検証（UoW-B の画像入力等）が対象であり、内部 API の呼び出し回数はその対象外と判断する。
 
 ### Question 5: 多重初期化への防御パターン（Security / 誤用防止）
 
@@ -84,7 +92,9 @@ B) UoW-A が `container` への二重マウントを検知し、警告または�
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: `component-methods.md` の `createViewer` シグネチャは単純な工場関数であり、多重呼び出し検知の仕組みは定義されていない。DOM 要素の所有権管理はフレームワーク側（React 等）が担うのが自然な責務分担。また React の `StrictMode` は開発時に意図的に二重マウントする仕様があり、B のような検知ロジックは開発時に誤って警告/拒否してしまうリスクがある。
 
 ### Question 6: 縮退時（WebGL2 非対応等）の DOM 操作（Logical Components / Security の境界）
 
@@ -96,8 +106,19 @@ B) 最小限のプレースホルダ要素（例: 汎用的なエラーメッセ
 
 C) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: A
+
+**採用理由**: UI 表現は一貫して UoW-G（同梱コントロール UI）に集約するという Inception の責務分担（`components.md` C10 `ControlsUI`）を尊重する。UoW-A は「何が起きたか」を正確にイベントで伝えることに専念し、見た目の責務は持たない。`component-methods.md` も `ViewerHandle` の責務を状態通知（イベント）に限定している。
 
 ## 回答後の進め方
 
 全質問回答後、曖昧・矛盾がないか分析し、必要なら `uow-a-nfr-design-clarification-questions.md` を作成する。問題なければ Step 6 の成果物生成（`nfr-design-patterns.md` / `logical-components.md`）に進む。
+
+## 回答決定プロセスの記録（比較検討サマリ）
+
+各質問はユーザー提示の「推奨セット」をそのまま採用（Q1=A, Q2=A, Q3=A, Q4=A, Q5=A, Q6=A）。決定にあたり比較した選択肢ごとの長所・短所は各質問直下の「採用理由」に記録した通り。判断軸として一貫して優先したのは:
+
+1. **時期尚早な最適化・過剰設計の回避**（dirty flag・オブジェクトプール・多重初期化検知・防御的上限は、現時点で価値に見合わないと判断）
+2. **ユニット境界の尊重**（UI 表現は UoW-G、入力検証は UoW-B というように、他ユニットの責務を UoW-A で先取りしない）
+3. **将来の参照容易性**（コンテキストロスト復帰の状態機械化は、基盤コンポーネントとして長く使われることを見込んだ投資）
+4. **Inception 成果物との整合**（`component-methods.md` のシグネチャ・責務分担を超える追加仕様を持ち込まない）
