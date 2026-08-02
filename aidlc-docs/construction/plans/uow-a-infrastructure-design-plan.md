@@ -21,7 +21,7 @@
 - [x] Step 1: Functional Design / NFR Design 成果物の分析（上表に反映）
 - [x] Step 2〜4: 本計画ファイルの作成・質問埋め込み
 - [x] Step 5: ユーザー回答の収集・曖昧性分析（推奨案を全問採用・曖昧表現なし）
-- [ ] Step 6: 成果物生成（`infrastructure-design.md` / `deployment-architecture.md`）
+- [x] Step 6: 成果物生成（`infrastructure-design.md` / `deployment-architecture.md`）
 - [ ] Step 7〜9: 完了メッセージ提示・承認取得・記録
 
 ## 確認質問
