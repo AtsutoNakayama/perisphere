@@ -1,3 +1,5 @@
+import { Gallery, normalizePhotoInput } from "../gallery/Gallery.js";
+import type { PhotoInput } from "../gallery/types.js";
 import { InputManager } from "../interaction/InputManager.js";
 import { KeyboardInputSource } from "../interaction/KeyboardInputSource.js";
 import { PointerInputSource } from "../interaction/PointerInputSource.js";
@@ -44,6 +46,7 @@ const LOAD_IMAGE_UNKNOWN_ERROR_MESSAGE = "Failed to load the image.";
 const INVALID_VIEW_MESSAGE = "The provided view contains a non-finite value.";
 const INVALID_ZOOM_LIMITS_MESSAGE =
   "The provided zoom limits are invalid (non-finite, or minFov is not less than maxFov).";
+const INVALID_PHOTO_INDEX_MESSAGE = "The provided photo index is not an integer within range.";
 
 function isBrowserEnvironment(): boolean {
   // BR-A-01: SSR セーフな環境ガード。
@@ -113,6 +116,15 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
         registerInputSource: () => {},
         setKeymap: () => {},
       },
+      gallery: {
+        // 縮退ハンドルには Renderer が存在せず写真を反映できないため、全て安全な no-op とする
+        // （`interaction` と同じ思想。同期 API のため `loadImage` のような reject はしない）。
+        setPhotos: () => {},
+        next: () => {},
+        prev: () => {},
+        goTo: () => {},
+        getPhotoIndex: () => -1,
+      },
     });
 
     // BR-A-04: 呼び出し元が ViewerHandle を受け取った後の on('error', ...) が
@@ -135,6 +147,8 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
   let currentMode: ViewerMode = standardMode;
   // BR-D-13: コンテキストロスト復帰コールバックからも参照するため、Renderer 構築前に宣言する。
   const viewController = new ViewController();
+  // BR-E-13: 写真リストと目標（pending）インデックスの保持（RP-E-1）。
+  const gallery = new Gallery();
 
   const renderer = new Renderer(container, {
     onContextLost: () => {
@@ -212,9 +226,15 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
         setMode(intent.mode);
         break;
       case "photoNext":
+        // BR-E-11: UoW-D 時点の no-op（BR-D-16）を解消し、next() へ結線する。
+        next();
+        break;
       case "photoPrev":
+        // BR-E-11: UoW-D 時点の no-op（BR-D-16）を解消し、prev() へ結線する。
+        prev();
+        break;
       case "toggleFullscreen":
-        // BR-D-16: UoW-E（ギャラリー）/UoW-F（フルスクリーン）が未実装のため安全に無視する。
+        // BR-D-16: UoW-F（フルスクリーン）が未実装のため安全に無視する。
         break;
     }
   }
@@ -254,8 +274,9 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
   state.ready = true;
   state.loadState = "ready";
 
-  async function loadImage(input: ImageInput): Promise<void> {
-    // BR-B-08: 進行中の前回ロードがあれば中断し、最新呼び出しを優先する。
+  // BR-E-06/RP-E-2: loadImage()・写真切替（switchToPhoto）の両方から呼ばれる共通ロード処理。
+  async function performLoad(input: ImageInput): Promise<void> {
+    // BR-B-08/BR-E-09: 進行中の前回ロードがあれば中断し、最新呼び出しを優先する。
     currentAbortController?.abort();
     const controller = new AbortController();
     currentAbortController = controller;
@@ -308,7 +329,7 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
       state.imageLoadState = "ready";
     } catch (error) {
       if (isAbortError(error)) {
-        // BR-B-08: 中断されたロードは error を発火せず静かに reject する。
+        // BR-B-08/BR-E-09: 中断されたロードは error を発火せず静かに reject する。
         throw error;
       }
 
@@ -322,8 +343,72 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
     }
   }
 
+  async function loadImage(input: ImageInput): Promise<void> {
+    return performLoad(input);
+  }
+
   function registerSource(adapter: ImageSourceAdapter): void {
     registeredAdapters.push(adapter);
+  }
+
+  // BR-E-06: 写真切替は既存のロードパイプライン（performLoad）を再利用する。
+  async function switchToPhoto(index: number, photo: PhotoInput): Promise<void> {
+    const normalized = normalizePhotoInput(photo);
+    try {
+      await performLoad(normalized.src);
+      // BR-E-07/BR-E-13: ロード成功時にのみ「表示中」ポインタを確定させる。
+      state.photoIndex = index;
+      eventBus.emit("photochange", {
+        type: "photochange",
+        index,
+        ...(normalized.id !== undefined && { id: normalized.id }),
+      });
+    } catch (error) {
+      if (isAbortError(error)) {
+        // BR-E-09: より新しい呼び出しに追い越された。静かに終了する。
+        return;
+      }
+      // BR-E-08: performLoad が既に error を発火・reject 済み。photoIndex は変更しない。
+    }
+  }
+
+  function setPhotos(photos: readonly PhotoInput[]): void {
+    // BR-E-02: リストを差し替え、1枚目があれば自動的にロードを開始する。
+    gallery.setPhotos(photos);
+    const photo = gallery.getPhoto(0);
+    if (photo !== undefined) {
+      void switchToPhoto(0, photo);
+    }
+  }
+
+  function next(): void {
+    const result = gallery.next();
+    if (result.status !== "moved") return; // BR-E-04: 写真未設定時は安全に無視する。
+    const photo = gallery.getPhoto(result.index);
+    if (photo !== undefined) void switchToPhoto(result.index, photo);
+  }
+
+  function prev(): void {
+    const result = gallery.prev();
+    if (result.status !== "moved") return; // BR-E-04
+    const photo = gallery.getPhoto(result.index);
+    if (photo !== undefined) void switchToPhoto(result.index, photo);
+  }
+
+  function goTo(index: number): void {
+    const result = gallery.goTo(index);
+    if (result.status === "out-of-range") {
+      // BR-E-05: 範囲外の明示指定は INVALID_INPUT を発火する。
+      errorManager.report("INVALID_INPUT", INVALID_PHOTO_INDEX_MESSAGE);
+      return;
+    }
+    if (result.status === "empty") return; // BR-E-04
+    const photo = gallery.getPhoto(result.index);
+    if (photo !== undefined) void switchToPhoto(result.index, photo);
+  }
+
+  function getPhotoIndex(): number {
+    return state.photoIndex;
   }
 
   function setMode(mode: ViewerModeId, _options?: ModeChangeOptions): void {
@@ -401,6 +486,7 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
     imageLoading: { loadImage, registerSource },
     modeSwitching: { setMode, registerMode, listModes },
     interaction: { getView, setView, setZoomLimits, registerInputSource, setKeymap },
+    gallery: { setPhotos, next, prev, goTo, getPhotoIndex },
   });
 
   // BR-A-04: ready イベントもマイクロタスクまで発火を遅延する（同じ運用上の理由）。
@@ -431,6 +517,14 @@ interface InteractionCapability {
   setKeymap: (map: Partial<Keymap> | null) => void;
 }
 
+interface GalleryCapability {
+  setPhotos: (photos: readonly PhotoInput[]) => void;
+  next: () => void;
+  prev: () => void;
+  goTo: (index: number) => void;
+  getPhotoIndex: () => number;
+}
+
 interface HandleDeps {
   eventBus: EventBus;
   state: ReturnType<typeof createViewerState>;
@@ -441,6 +535,8 @@ interface HandleDeps {
   modeSwitching: ModeSwitchingCapability;
   /** 縮退ハンドルでも安全な no-op 実装を持つため null にはしない（BR-D-16 と同じ思想）。 */
   interaction: InteractionCapability;
+  /** 縮退ハンドルでも安全な no-op 実装を持つため null にはしない（`interaction` と同じ思想）。 */
+  gallery: GalleryCapability;
 }
 
 function buildHandle({
@@ -451,6 +547,7 @@ function buildHandle({
   imageLoading,
   modeSwitching,
   interaction,
+  gallery,
 }: HandleDeps): ViewerHandle {
   const guardDisposed = (): boolean => {
     if (disposables.isDisposed) {
@@ -520,6 +617,26 @@ function buildHandle({
     setKeymap(map: Partial<Keymap> | null): void {
       if (!guardDisposed()) return;
       interaction.setKeymap(map);
+    },
+    setPhotos(photos: readonly PhotoInput[]): void {
+      if (!guardDisposed()) return;
+      gallery.setPhotos(photos);
+    },
+    next(): void {
+      if (!guardDisposed()) return;
+      gallery.next();
+    },
+    prev(): void {
+      if (!guardDisposed()) return;
+      gallery.prev();
+    },
+    goTo(index: number): void {
+      if (!guardDisposed()) return;
+      gallery.goTo(index);
+    },
+    getPhotoIndex(): number {
+      guardDisposed();
+      return gallery.getPhotoIndex();
     },
     dispose(): void {
       // BR-A-10: 冪等。2回目以降は no-op（警告なし。BR-A-09 は「他のメソッド」向け）。

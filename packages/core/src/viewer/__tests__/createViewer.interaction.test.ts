@@ -131,8 +131,17 @@ describe("createViewer — interaction (UoW-D)", () => {
       expect(handle.getMode()).toBe("ultraWide");
     });
 
-    it.each(["photoNext", "photoPrev", "toggleFullscreen"] as const)(
-      "safely ignores '%s' intents since UoW-E/F are not implemented yet (BR-D-16)",
+    it("safely ignores 'toggleFullscreen' intents since UoW-F is not implemented yet (BR-D-16)", () => {
+      const container = document.createElement("div");
+      const handle = createViewer(container);
+      const source = fakeInputSource("fake");
+      handle.registerInputSource(source);
+
+      expect(() => source.emit({ kind: "toggleFullscreen" })).not.toThrow();
+    });
+
+    it.each(["photoNext", "photoPrev"] as const)(
+      "safely ignores '%s' intents when no photos are set (BR-E-04)",
       (kind) => {
         const container = document.createElement("div");
         const handle = createViewer(container);
@@ -140,8 +149,12 @@ describe("createViewer — interaction (UoW-D)", () => {
         handle.registerInputSource(source);
 
         expect(() => source.emit({ kind })).not.toThrow();
+        expect(handle.getPhotoIndex()).toBe(-1);
       },
     );
+
+    // 写真が設定済みの状態での photoNext/photoPrev の実際の切替は、Loader をモック化した
+    // createViewer.gallery.test.ts（UoW-E）側で検証する（本ファイルは Loader を実装のまま使うため）。
   });
 
   describe("PP-D-1 Coalesced View Change Emission", () => {
