@@ -7,6 +7,11 @@ import type { ViewState, ZoomLimits } from "./types.js";
 export interface ViewerMode {
   readonly id: string;
   readonly defaultZoomLimits?: ZoomLimits;
+  /**
+   * モード適用直後にカメラ/シェーダへ実際に反映される既定ビュー（UoW-D 拡張、`domain-entities.md` E10）。
+   * 省略時、`ViewController` は絶対フォールバック（`viewMath.FALLBACK_DEFAULT_VIEW`）を用いる。
+   */
+  readonly defaultView?: ViewState;
   apply(ctx: ModeContext): void;
   updateView(ctx: ModeContext, view: ViewState): void;
   /** モード切替のたびに呼ばれる（BR-C-03）。次のモードへ渡す前の後片付け（マテリアル復帰等）を行う。 */

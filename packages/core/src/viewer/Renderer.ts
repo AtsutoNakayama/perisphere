@@ -30,6 +30,11 @@ export interface RendererCallbacks {
   onRebuildSucceeded: () => void;
   /** recovering -> degraded 遷移時（再試行しない、BR-A-12）。 */
   onRebuildFailed: () => void;
+  /**
+   * 毎フレーム、描画（`render`）の直後に呼ばれる（UoW-D 拡張、PP-D-1 Coalesced View Change Emission）。
+   * `viewChange`/`zoomChange` の集約発火チェックに用いる。省略可能（呼び出しコストを避けたい場合）。
+   */
+  onFrame?: () => void;
 }
 
 interface SceneGraph {
@@ -143,6 +148,7 @@ export class Renderer {
     if (this.rafHandle !== null) return;
     const tick = (): void => {
       this.webglRenderer.render(this.scene, this.camera);
+      this.callbacks.onFrame?.();
       this.rafHandle = requestAnimationFrame(tick);
     };
     this.rafHandle = requestAnimationFrame(tick);

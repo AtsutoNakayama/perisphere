@@ -14,6 +14,7 @@ const DEFAULT_ZOOM_LIMITS: ZoomLimits = { minFov: 30, maxFov: 90 };
 export class StandardMode implements ViewerMode {
   readonly id = "standard";
   readonly defaultZoomLimits: ZoomLimits = DEFAULT_ZOOM_LIMITS;
+  readonly defaultView: ViewState = DEFAULT_VIEW;
 
   apply(ctx: ModeContext): void {
     this.updateView(ctx, DEFAULT_VIEW);

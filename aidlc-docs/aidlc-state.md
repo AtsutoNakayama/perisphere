@@ -79,6 +79,17 @@
 
 **UoW-C Per-Unit Loop 完了（2026-08-03）。標準以外の6モード（UltraWide/Dewarp/Linear/Panini/TinyPlanet/CrystalBall）+ カスタムモード登録機構が完成。**
 
+#### UoW-D 視点操作・入力（[#38](https://github.com/AtsutoNakayama/perisphere/issues/38) / ブランチ `feat/38-uow-d-input`）
+
+- [x] Functional Design（Q1〜Q8 回答確定〔全て推奨案採用〕。成果物 `construction/uow-d/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。既存 IF との突き合わせで発見: `ViewerHandle.setView/getView/setZoomLimits/registerInputSource/setKeymap` と `viewchange`/`zoomchange` イベントは Inception で確定済みだったため計画時の誤りを訂正（`setZoomLimits` は `Partial<ZoomLimits>` 方式）。`ViewerMode` IF へ `defaultView?` を追加（モード切替直後の ViewController 同期のため）。**ユーザー承認: 2026-08-03**）
+- [x] NFR Requirements（Q1〜Q7 回答確定〔全て推奨案採用〕。成果物 `construction/uow-d/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。Performance（発火頻度制御・ホットパス方針）と Accessibility（UoW-D/UoW-G境界）を本ユニットの主担当カテゴリと判定。新規ランタイム依存なし。**ユーザー承認: 2026-08-03**）
+- [x] NFR Design（Q1〜Q4 回答確定〔全て推奨案採用〕。成果物 `construction/uow-d/nfr-design/`: nfr-design-patterns.md（RP-D-1 Graceful Pointer Capture Fallback / PP-D-1 Coalesced View Change Emission、既存Rendererループへ相乗り / Security新規論点なし）/ logical-components.md（L1〜L5、`viewMath.ts` 純粋関数モジュール新設）。**ユーザー承認: 2026-08-03**）
+- [x] Infrastructure Design（Q1=A で確定。成果物 `construction/uow-d/infrastructure-design/`: infrastructure-design.md / deployment-architecture.md。インフラ変更なし（既存 `pnpm -r` CI ジョブでカバー）。**ユーザー承認: 2026-08-03**）
+- [x] Code Generation（成果物 `construction/plans/uow-d-code-generation-plan.md`（Step 2〜5,7 全完了）、`packages/core/src/interaction/` 新規一式、`viewer/`・`modes/` への拡張、`construction/uow-d/code/code-summary.md`。テスト24ファイル214件（UoW-A/C既存128件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green。計画からの逸脱3件（pitchクランプ[-89,89]→[-90,90]訂正、`ViewerState.ts`のUoW-B由来の`imageLoadState`初期化漏れを発見・修正、`Renderer.test.ts`へのonFrame単体テスト追加を見送りcreateViewer.interaction.test.tsへ統合）を code-summary.md に記載。**ユーザー承認: 2026-08-03**）
+- [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
+
+**UoW-D Per-Unit Loop 完了（2026-08-03）。マウス/タッチ/キーボードでの視点操作（pan/tilt/zoom）とキーマップ・ズーム上下限の設定が完成。**
+
 ## Notes
 
 - 監査ログ `aidlc-docs/audit.md` はリポジトリ方針によりローカル限定（`.gitignore` 済み）。

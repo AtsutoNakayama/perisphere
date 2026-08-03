@@ -34,6 +34,10 @@ describe("CrystalBallMode (BR-C-07/11)", () => {
     expect(mode.defaultZoomLimits).toEqual({ minFov: 30, maxFov: 90 });
   });
 
+  it("exposes defaultView matching the view applied by apply() (UoW-D, domain-entities.md E10)", () => {
+    expect(new CrystalBallMode().defaultView).toEqual({ yaw: 0, pitch: 0, fov: 75 });
+  });
+
   it("apply() moves the camera outside the sphere and flips the material to FrontSide", () => {
     const mode = new CrystalBallMode();
     const ctx = createModeContext();
