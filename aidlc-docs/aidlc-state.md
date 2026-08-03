@@ -46,6 +46,17 @@
 
 （Issue #21 のスコープ外 — unit ごとに後続 Issue を起票予定。実行計画の暫定推奨: Functional Design / NFR Requirements / NFR Design / Infrastructure Design（minimal）/ Code Generation / Build and Test をいずれも EXECUTE）
 
+#### UoW-A コア基盤（[#27](https://github.com/AtsutoNakayama/perisphere/issues/27) / ブランチ `feat/27-uow-a-core`）
+
+- [x] Functional Design（成果物 `construction/uow-a/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。**ユーザー承認: 2026-08-02**）
+- [x] NFR Requirements（成果物 `construction/uow-a/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。技術スタック確定: pnpm workspaces / tsup / Vitest / fast-check / ESLint+Prettier / TS strict / three.js peerDependencies広めrange / Dependabot+CI監査 / ES2020ターゲット。**ユーザー承認: 2026-08-02**）
+- [x] NFR Design（成果物 `construction/uow-a/nfr-design/`: nfr-design-patterns.md / logical-components.md。Resilience/Performance/Securityパターン確定、新規論理コンポーネント ContextRecoveryState（状態機械）を導入。**ユーザー承認: 2026-08-02**）
+- [x] Infrastructure Design（成果物 `construction/uow-a/infrastructure-design/`: infrastructure-design.md / deployment-architecture.md。CI ジョブ〔lint/build/test〕・Dependabot 概念設計、npm 公開はスコープ外。**ユーザー承認: 2026-08-03**）
+- [x] Code Generation（成果物 `construction/plans/uow-a-code-generation-plan.md`（Step 1〜7 全完了）、`packages/core`（`@perisphere/core`）一式、`construction/uow-a/code/code-summary.md`。`pnpm -r build`/`test`/`lint` 全て green。**ユーザー承認: 2026-08-03**）
+- [ ] Build and Test（全ユニット共通、最後にまとめて実施のため UoW-A 時点では保留）
+
+**UoW-A Per-Unit Loop 完了（2026-08-03）。次は UoW-B 以降の後続 Issue、または Issue #27 の PR 作成。**
+
 ## Notes
 
 - 監査ログ `aidlc-docs/audit.md` はリポジトリ方針によりローカル限定（`.gitignore` 済み）。

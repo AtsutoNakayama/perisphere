@@ -4,3 +4,10 @@
 # AI-DLC: 監査ログはローカル限定（ユーザーの生入力を逐語で含むため public 公開しない）
 # 進捗メタの aidlc-state.md と設計成果物は意図的に追跡する（詳細は instructions/project-notes.md）
 aidlc-docs/audit.md
+
+# Node / pnpm workspace
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+
