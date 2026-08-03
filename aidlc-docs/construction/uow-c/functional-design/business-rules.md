@@ -88,3 +88,31 @@
 Crystal Ball の `dispose(ctx)` は、球体メッシュのマテリアルの `side` を他モード共通の `BackSide` へ戻す。
 
 - **trace**: Q4=A, BR-C-03（モード切替手順の一部）
+
+## 公開 API の拡張（Code Generation Part 1 計画時に発見・追記）
+
+**経緯**: Functional Design 承認後、Code Generation の計画作成時に `inception/application-design/component-methods.md` を再確認したところ、`ViewerHandle` に `registerMode`/`listModes` および `setMode` のオプション引数が定義されていたにもかかわらず、本ドキュメントの初版では欠落していたことが判明した。UoW-B の BR-B-11/13/14 と同様、承認済み Functional Design への追記として扱う（レビュー対象）。
+
+### BR-C-12 `registerMode` によるカスタムモード登録
+
+`ViewerHandle.registerMode(mode: ViewerMode): void` を追加する。`ModeRegistry.register`（E1）へ委譲する。同梱 7 モードもこの機構の上に実装されているため（BR-C-01）、利用者が登録するカスタムモードと同梱モードは対等に扱われる。
+
+- **trace**: US-12, FR-05, `component-methods.md` L47
+
+### BR-C-13 `listModes` による登録済みモード一覧の取得
+
+`ViewerHandle.listModes(): ViewerModeId[]` を追加する。`ModeRegistry` に登録済みの全モードの `id` を返す（登録順）。
+
+- **trace**: `component-methods.md` L48（US-12 に付随する探索用 API）
+
+### BR-C-14 `setMode` のオプション引数（将来のアニメーション遷移への予約）
+
+`ViewerHandle.setMode(mode: ViewerModeId, options?: ModeChangeOptions): void` に拡張する。`options` は UoW-C 時点では未使用（受け取っても無視する）。`unit-of-work.md` の UoW-C-F（モード遷移演出、Future）が「API 形状の拡張余地は UoW-C で確保済み」と定義しているため、本ユニットで型のみ予約する。
+
+- **trace**: US-11（Future、`unit-of-work.md` UoW-C-F の記述）, FR-04
+
+### BR-C-15 `ViewerModeId` 型の拡張
+
+`ViewerModeId` を `'standard' | 'ultraWide' | 'dewarp' | 'linear' | 'panini' | 'tinyPlanet' | 'crystalBall' | (string & {})` に拡張する（`component-methods.md` の型定義通り）。同梱 6 モードの `id` はそれぞれ `'ultraWide'`/`'dewarp'`/`'linear'`/`'panini'`/`'tinyPlanet'`/`'crystalBall'` とする。`(string & {})` により `registerMode`（BR-C-12）で登録するカスタムモードの任意 `id` も型エラーにならない。
+
+- **trace**: US-12, `component-methods.md` 共通型定義
