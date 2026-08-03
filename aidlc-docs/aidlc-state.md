@@ -71,7 +71,7 @@
 #### UoW-C 投影モード（[#36](https://github.com/AtsutoNakayama/perisphere/issues/36) / ブランチ `feat/36-uow-c-modes`）
 
 - [x] Functional Design（Q1〜Q6 回答確定〔全て推奨案採用〕。成果物 `construction/uow-c/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。実装方式をハイブリッド確定（カメラベース: UltraWide/Linear、シェーダベース: Dewarp/Panini/TinyPlanet、外部カメラ: CrystalBall）。UoW-A `Renderer`/`ModeContext` への拡張点（`setSphereMaterial`・`texture` フィールド）を明記。**ユーザー承認: 2026-08-03**）
-- [ ] NFR Requirements
+- [x] NFR Requirements（成果物 `construction/uow-c/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。UoW-Bとの統合欠陥を発見・対応方針確定（Renderer.setSphereTextureのマテリアル非依存化）。ShaderMaterialのモードごとキャッシュ、投影数式のTS純粋関数切り出し+PBT。**ユーザー承認: 2026-08-03**）
 - [ ] NFR Design
 - [ ] Infrastructure Design
 - [ ] Code Generation
