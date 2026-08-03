@@ -35,5 +35,5 @@
 
 ## 次のステップ（Step 6: 成果物生成、承認後）
 
-- `aidlc-docs/construction/uow-b/infrastructure-design/infrastructure-design.md`
-- `aidlc-docs/construction/uow-b/infrastructure-design/deployment-architecture.md`
+- [x] `aidlc-docs/construction/uow-b/infrastructure-design/infrastructure-design.md`
+- [x] `aidlc-docs/construction/uow-b/infrastructure-design/deployment-architecture.md`
