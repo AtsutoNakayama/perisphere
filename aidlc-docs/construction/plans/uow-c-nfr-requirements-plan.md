@@ -74,5 +74,5 @@ Functional Design 承認後、UoW-B との統合を精査した結果、1 点見
 
 ## 次のステップ（Step 6: 成果物生成、承認後）
 
-- `aidlc-docs/construction/uow-c/nfr-requirements/nfr-requirements.md`
-- `aidlc-docs/construction/uow-c/nfr-requirements/tech-stack-decisions.md`
+- [x] `aidlc-docs/construction/uow-c/nfr-requirements/nfr-requirements.md`
+- [x] `aidlc-docs/construction/uow-c/nfr-requirements/tech-stack-decisions.md`
