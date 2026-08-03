@@ -63,8 +63,10 @@
 - [x] NFR Requirements（成果物 `construction/uow-b/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。UoW-A のモノレポ横断決定を継承し、UoW-B固有: Loaderをテスト境界化・fetchのvi.fn直接モック・PBT対象拡大（アスペクト比境界値/多重呼び出しキャンセル）・新規ランタイム依存なし。**ユーザー承認: 2026-08-03**）
 - [x] NFR Design（成果物 `construction/uow-b/nfr-design/`: nfr-design-patterns.md / logical-components.md。Resilience: Single-Attempt Load/Cancellation-over-Retry、Performance: Throttled Progress Emission、Security: Layered Validation継続、L1〜L5論理コンポーネント確定。**ユーザー承認: 2026-08-03**）
 - [x] Infrastructure Design（成果物 `construction/uow-b/infrastructure-design/`: infrastructure-design.md / deployment-architecture.md。インフラ変更なし（CI/Dependabotとも既存でカバー）。**ユーザー承認: 2026-08-03**）
-- [ ] Code Generation
+- [x] Code Generation（成果物 `construction/plans/uow-b-code-generation-plan.md`（Step 2〜5,7 全完了）、`packages/core/src/loader/` 新規一式、`viewer/` への拡張、`construction/uow-b/code/code-summary.md`。テスト9ファイル66件（UoW-A既存32件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green。**ユーザー承認: 2026-08-03**）
 - [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
+
+**UoW-B Per-Unit Loop 完了（2026-08-03）。「1枚の画像を標準ビューで表示」という最初の縦切り到達点（UoW-A+UoW-B）が完成。**
 
 ## Notes
 
