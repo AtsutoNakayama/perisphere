@@ -20,5 +20,6 @@ export function createViewerState(): ViewerState {
     imageLoadState: "idle",
     view: { ...FALLBACK_DEFAULT_VIEW },
     photoIndex: -1,
+    isFullscreen: false,
   };
 }

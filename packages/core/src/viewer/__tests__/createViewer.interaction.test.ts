@@ -31,6 +31,7 @@ vi.mock("../Renderer.js", async () => {
     stopLoop = vi.fn();
     dispose = vi.fn();
     setActiveMode = vi.fn();
+    resize = vi.fn();
     setSphereTexture = vi.fn();
     setSphereMaterial = vi.fn();
     maxTextureSize = 4096;
@@ -129,15 +130,6 @@ describe("createViewer — interaction (UoW-D)", () => {
       source.emit({ kind: "setMode", mode: "ultraWide" });
 
       expect(handle.getMode()).toBe("ultraWide");
-    });
-
-    it("safely ignores 'toggleFullscreen' intents since UoW-F is not implemented yet (BR-D-16)", () => {
-      const container = document.createElement("div");
-      const handle = createViewer(container);
-      const source = fakeInputSource("fake");
-      handle.registerInputSource(source);
-
-      expect(() => source.emit({ kind: "toggleFullscreen" })).not.toThrow();
     });
 
     it.each(["photoNext", "photoPrev"] as const)(

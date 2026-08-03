@@ -124,6 +124,18 @@ export class Renderer {
   }
 
   /**
+   * container の現在のサイズでカメラのアスペクト比・WebGL キャンバスサイズを再計算する
+   * （domain-entities.md E7、BR-F-09）。フルスクリーン切替の前後で呼ばれる想定。
+   */
+  resize(): void {
+    const width = this.container.clientWidth || 1;
+    const height = this.container.clientHeight || 1;
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    this.webglRenderer.setSize(width, height);
+  }
+
+  /**
    * 球体メッシュへテクスチャを反映する（BR-B-09）。`texture` が `null` の場合はプレースホルダの無地表示へ戻す。
    * テクスチャ自体の dispose はこのメソッドの責務外（呼び出し元が管理する、L1/BR-B-15）。
    */

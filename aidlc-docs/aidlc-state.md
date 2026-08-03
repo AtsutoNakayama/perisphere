@@ -99,7 +99,18 @@
 - [x] Code Generation（成果物 `construction/plans/uow-e-code-generation-plan.md`（Step 2〜5,7 全完了）、`packages/core/src/gallery/` 新規一式、`viewer/`・`index.ts` への拡張、`construction/uow-e/code/code-summary.md`。テスト26ファイル241件（UoW-A/B/C/D既存214件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green。計画からの逸脱1件（`photoNext`/`photoPrev`実切替検証テストの配置先を`createViewer.interaction.test.ts`〔Loader未モック〕から`createViewer.gallery.test.ts`〔Loaderモック済み〕へ変更）を code-summary.md に記載。**ユーザー承認: 2026-08-03**）
 - [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
 
-**UoW-E Per-Unit Loop 完了（2026-08-03）。複数写真の next/prev/index切替とギャラリーAPI（setPhotos/next/prev/goTo/getPhotoIndex/photochange）が完成。UoW-D で先行実装済みだった photoNext/photoPrev キー操作もここで実際の写真切替に結線された。**
+**UoW-E Per-Unit Loop 完了（2026-08-03）。複数写真の next/prev/index切替とギャラリーAPI（setPhotos/next/prev/goTo/getPhotoIndex/photochange）が完成。UoW-D で先行実装済みだった photoNext/photoPrev キー操作もここで実際の写真切替に結線された。PR #41 マージ・Issue #40 クローズ済み。main 同期済み。**
+
+#### UoW-F フルスクリーン（[#42](https://github.com/AtsutoNakayama/perisphere/issues/42) / ブランチ `feat/42-uow-f-fullscreen`）
+
+- [x] Functional Design（Q1〜Q8 回答確定〔全て推奨案採用〕。成果物 `construction/uow-f/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。`FullscreenManager`（C9）の設計を確定: 対象要素は container（Q1）、非対応環境は擬似フルスクリーン〔インラインスタイル方式〕（Q2）、擬似モード中のEscキー対応（Q3）、ネイティブAPI実行時失敗は`error`(`FULLSCREEN_FAILED`新設)発火+reject・擬似へは自動フォールバックしない（Q4/Q6）、ネイティブモードの状態遷移は`document`の`fullscreenchange`イベントに一本化（Q5）、`dispose()`時の自動解除（Q7）。本ステージで発見したギャップ（`Renderer`がコンテナサイズ変化に追従しない）への対応として`Renderer.resize()`を新設しフルスクリーン切替時のみ呼び出す範囲に限定（Q8）。**ユーザー承認: 2026-08-03（全質問を推奨案で確定、以降の全ステージを事前承認）**）
+- [x] NFR Requirements（Q1〜Q4 回答確定〔全て推奨案採用〕。成果物 `construction/uow-f/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。jsdom が Fullscreen API 未実装であることを確認し、非対応分岐はモック不要・対応分岐はテストごとの `vi.fn()` スタブ注入で検証する方針を確定（UoW-A の WebGL モックと同パターン）。`FullscreenManager` の状態遷移を PBT 対象化。新規ランタイム依存なし。`Renderer.resize()` は既存 Renderer テスト境界を再利用。**ユーザー承認: 2026-08-03（事前承認済み・全て推奨案）**）
+- [x] NFR Design（Q1〜Q3 回答確定〔全て推奨案採用〕。成果物 `construction/uow-f/nfr-design/`: nfr-design-patterns.md（RP-F-1 Silent Best-Effort Cleanup〔新規発見〕/ RP-F-2 Native-Change-Event as Single Source of Truth / SP-F-1 攻撃面の不在 / LC-F-1,2、Rejected Patterns）/ logical-components.md（L1〜L5）。Q1 承認に伴い Functional Design 成果物（business-rules.md BR-F-08）へ fire-and-forget 呼び出しの `.catch(() => {})` 明記を遡及反映。**ユーザー承認: 2026-08-03（事前承認済み・全て推奨案）**）
+- [x] Infrastructure Design（Q1=A で確定。成果物 `construction/uow-f/infrastructure-design/`: infrastructure-design.md / deployment-architecture.md。インフラ変更なし（既存 `pnpm -r` CI ジョブでカバー）。**ユーザー承認: 2026-08-03（事前承認済み）**）
+- [x] Code Generation（成果物 `construction/plans/uow-f-code-generation-plan.md`（Step 2〜5,7 全完了）、`packages/core/src/fullscreen/` 新規一式、`viewer/`・`index.ts` への拡張、`construction/uow-f/code/code-summary.md`。テスト28ファイル266件（UoW-A/B/C/D/E既存241件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green。計画からの逸脱2件（フルスクリーンは縮退ハンドル〔WebGL2非対応〕でも実機能とする設計判断〔Renderer非依存のため〕、`Renderer.resize()`のテスト境界を実際の`Renderer`モック方式に訂正）を code-summary.md に記載。**ユーザー承認: 2026-08-03（事前承認済み）**）
+- [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
+
+**UoW-F Per-Unit Loop 完了（2026-08-03）。フルスクリーン切替 API（enterFullscreen/exitFullscreen/isFullscreen/fullscreenchange）と非対応環境向け擬似フルスクリーンが完成。UoW-D で先行実装済みだった toggleFullscreen キー操作もここで実際の切替に結線された。**
 
 ## Notes
 
