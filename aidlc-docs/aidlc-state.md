@@ -61,7 +61,7 @@
 
 - [x] Functional Design（Q1〜Q8 回答確定〔全て推奨案採用〕。成果物 `construction/uow-b/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。UoW-A 既存実装への拡張点（ViewerEventMap.progress・ViewerState.imageLoadState・ViewerHandle.loadImage/registerSource・Renderer.setSphereTexture）を明記。**ユーザー承認: 2026-08-03**）
 - [x] NFR Requirements（成果物 `construction/uow-b/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。UoW-A のモノレポ横断決定を継承し、UoW-B固有: Loaderをテスト境界化・fetchのvi.fn直接モック・PBT対象拡大（アスペクト比境界値/多重呼び出しキャンセル）・新規ランタイム依存なし。**ユーザー承認: 2026-08-03**）
-- [ ] NFR Design
+- [x] NFR Design（成果物 `construction/uow-b/nfr-design/`: nfr-design-patterns.md / logical-components.md。Resilience: Single-Attempt Load/Cancellation-over-Retry、Performance: Throttled Progress Emission、Security: Layered Validation継続、L1〜L5論理コンポーネント確定。**ユーザー承認: 2026-08-03**）
 - [ ] Infrastructure Design
 - [ ] Code Generation
 - [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
