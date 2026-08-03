@@ -73,5 +73,5 @@ NFR-01（性能）・NFR-02（対象環境）・NFR-03（SSR セーフ）・NFR-
 
 ## 次のステップ（Step 6: 成果物生成、承認後）
 
-- `aidlc-docs/construction/uow-b/nfr-requirements/nfr-requirements.md`
-- `aidlc-docs/construction/uow-b/nfr-requirements/tech-stack-decisions.md`
+- [x] `aidlc-docs/construction/uow-b/nfr-requirements/nfr-requirements.md`
+- [x] `aidlc-docs/construction/uow-b/nfr-requirements/tech-stack-decisions.md`
