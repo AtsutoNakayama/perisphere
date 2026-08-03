@@ -55,7 +55,16 @@
 - [x] Code Generation（成果物 `construction/plans/uow-a-code-generation-plan.md`（Step 1〜7 全完了）、`packages/core`（`@perisphere/core`）一式、`construction/uow-a/code/code-summary.md`。`pnpm -r build`/`test`/`lint` 全て green。**ユーザー承認: 2026-08-03**）
 - [ ] Build and Test（全ユニット共通、最後にまとめて実施のため UoW-A 時点では保留）
 
-**UoW-A Per-Unit Loop 完了（2026-08-03）。次は UoW-B 以降の後続 Issue、または Issue #27 の PR 作成。**
+**UoW-A Per-Unit Loop 完了（2026-08-03）。PR #28 マージ・Issue #27 クローズ済み。main 同期済み。**
+
+#### UoW-B 画像入力・ロード（[#34](https://github.com/AtsutoNakayama/perisphere/issues/34) / ブランチ `feat/34-uow-b-loading`）
+
+- [ ] Functional Design（計画 `construction/plans/uow-b-functional-design-plan.md` 作成済み・Q1〜Q8 に比較表+推奨案埋め込み済み。回答待ち）
+- [ ] NFR Requirements
+- [ ] NFR Design
+- [ ] Infrastructure Design
+- [ ] Code Generation
+- [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
 
 ## Notes
 
