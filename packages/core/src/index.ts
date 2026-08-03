@@ -26,3 +26,4 @@ export type {
 } from "./loader/types.js";
 export type { InputIntent, InputSource, Keymap } from "./interaction/types.js";
 export type { PhotoInput } from "./gallery/types.js";
+export type { ControlsVisibility, UITextMap } from "./ui/types.js";

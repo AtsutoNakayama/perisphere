@@ -110,7 +110,18 @@
 - [x] Code Generation（成果物 `construction/plans/uow-f-code-generation-plan.md`（Step 2〜5,7 全完了）、`packages/core/src/fullscreen/` 新規一式、`viewer/`・`index.ts` への拡張、`construction/uow-f/code/code-summary.md`。テスト28ファイル266件（UoW-A/B/C/D/E既存241件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green。計画からの逸脱2件（フルスクリーンは縮退ハンドル〔WebGL2非対応〕でも実機能とする設計判断〔Renderer非依存のため〕、`Renderer.resize()`のテスト境界を実際の`Renderer`モック方式に訂正）を code-summary.md に記載。**ユーザー承認: 2026-08-03（事前承認済み）**）
 - [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
 
-**UoW-F Per-Unit Loop 完了（2026-08-03）。フルスクリーン切替 API（enterFullscreen/exitFullscreen/isFullscreen/fullscreenchange）と非対応環境向け擬似フルスクリーンが完成。UoW-D で先行実装済みだった toggleFullscreen キー操作もここで実際の切替に結線された。**
+**UoW-F Per-Unit Loop 完了（2026-08-03）。フルスクリーン切替 API（enterFullscreen/exitFullscreen/isFullscreen/fullscreenchange）と非対応環境向け擬似フルスクリーンが完成。UoW-D で先行実装済みだった toggleFullscreen キー操作もここで実際の切替に結線された。PR #43 マージ・Issue #42 クローズ済み。main 同期済み。**
+
+#### UoW-G 同梱コントロール UI（[#44](https://github.com/AtsutoNakayama/perisphere/issues/44) / ブランチ `feat/44-uow-g-controls-ui`）
+
+- [x] Functional Design（Q1〜Q9 回答確定〔全て推奨案採用〕。成果物 `construction/uow-g/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md / frontend-components.md。`ControlsVisibility`/`UITextMap` 新規型、`ViewerOptions.controls`/`text`・`ViewerHandle.setControlsVisibility`/`setText`/`getPhotoCount` 追加、`photochange.total` 追加を確定。発見したギャップ3件（写真総数非公開・BR-D-17とのフォーカス相互作用・registerMode非通知）への対応方針を確定。**ユーザー承認: 2026-08-04（包括承認・全て推奨案）**）
+- [x] NFR Requirements（Q1〜Q4 回答確定〔全て推奨案採用〕。成果物 `construction/uow-g/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。共有`<style>`タグのテスト独立性確保方針、表示状態計算・文言置換の純粋関数化とPBT対象化、`UITextMap`のtextContent/setAttribute限定（SECURITY-05）を確定。新規ランタイム依存なし。**ユーザー承認: 2026-08-04（包括承認）**）
+- [x] NFR Design（Q1〜Q3 回答確定〔全て推奨案採用〕。成果物 `construction/uow-g/nfr-design/`: nfr-design-patterns.md（RP-G-1 Silent Best-Effort Action / SP-G-1 Safe Text Rendering / SP-G-2 追加検証パターンなし / LC-G-1,2、Rejected Patterns）/ logical-components.md（L1〜L5、新規ディレクトリ`packages/core/src/ui/`確定）。**ユーザー承認: 2026-08-04（包括承認）**）
+- [x] Infrastructure Design（Q1=A で確定。成果物 `construction/uow-g/infrastructure-design/`: infrastructure-design.md / deployment-architecture.md。インフラ変更なし。**ユーザー承認: 2026-08-04（包括承認）**）
+- [x] Code Generation（成果物 `construction/plans/uow-g-code-generation-plan.md`（Step 2〜5,7 全完了）、`packages/core/src/ui/` 新規一式、`viewer/`（`types.ts`/`createViewer.ts`）・`index.ts` への拡張、`construction/uow-g/code/code-summary.md`。テスト31ファイル293件（UoW-A/B/C/D/E/F既存266件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green。計画からの逸脱2件（`ControlsUI`は縮退ハンドル〔WebGL2非対応〕でも実機能とする設計判断〔UoW-F FullscreenManagerの先例を踏襲〕、UoW-A の「縮退時container無変更」テストを`options.controls:false`明示のヘッドレス検証へ更新）を code-summary.md に記載。**ユーザー承認: 2026-08-04（事前の包括承認済み）**）
+- [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
+
+**UoW-G Per-Unit Loop 完了（2026-08-04）。素DOMによる同梱コントロールUI（フルスクリーン/ズーム/モード切替/写真前後/写真インジケーター）と、表示/非表示・スタイル・ヘッドレス・文言差し替えのAPI（setControlsVisibility/setText/ViewerOptions.controls/text）が完成。**
 
 ## Notes
 

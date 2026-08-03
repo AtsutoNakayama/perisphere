@@ -18,6 +18,9 @@ import { ModeRegistry } from "../modes/ModeRegistry.js";
 import { PaniniMode } from "../modes/PaniniMode.js";
 import { TinyPlanetMode } from "../modes/TinyPlanetMode.js";
 import { UltraWideMode } from "../modes/UltraWideMode.js";
+import { ControlsUI } from "../ui/ControlsUI.js";
+import type { ControlsUIDeps } from "../ui/ControlsUI.js";
+import type { ControlsVisibility, UITextMap } from "../ui/types.js";
 import { DisposableRegistry } from "./DisposableRegistry.js";
 import { ErrorManager } from "./ErrorManager.js";
 import { EventBus } from "./EventBus.js";
@@ -76,13 +79,17 @@ function isAbortError(error: unknown): boolean {
  * 描画基盤を構築できない場合は縮退したハンドルを返し、`error` イベント（`WEBGL_UNSUPPORTED`）で通知する。
  *
  * @param container - ビューワーを描画する DOM 要素
- * @param options - 初期化オプション（UoW-A 時点では予約のみ）
+ * @param options - 初期化オプション（`controls`/`text` は UoW-G、他は予約のみ）
  */
-export function createViewer(container: HTMLElement, _options?: ViewerOptions): ViewerHandle {
+export function createViewer(container: HTMLElement, options?: ViewerOptions): ViewerHandle {
   const eventBus = new EventBus();
   const state = createViewerState();
   const errorManager = new ErrorManager(state, eventBus);
   const disposables = new DisposableRegistry();
+
+  function getMode(): ViewerModeId {
+    return state.mode;
+  }
 
   const inBrowser = isBrowserEnvironment();
   const supported = inBrowser && canObtainWebGL2Context();
@@ -132,48 +139,74 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
     state.loadState = "error";
     disposables.register(() => eventBus.clear());
 
+    const degradedModeSwitching: ModeSwitchingCapability = {
+      // BR-C-02 相当の最小限の挙動。縮退ハンドルには Renderer が存在せずモード適用先がないため、
+      // 'standard' のみ有効な no-op として扱い、他は INVALID_INPUT とする。
+      setMode: (mode) => {
+        if (mode !== "standard") {
+          errorManager.report("INVALID_INPUT", INVALID_MODE_MESSAGE);
+        }
+      },
+      registerMode: () => {
+        // 縮退ハンドルでは登録しても反映先がないため no-op。
+      },
+      listModes: () => ["standard"],
+    };
+    const degradedInteraction: InteractionCapability = {
+      // 縮退ハンドルには Renderer/ModeContext が存在せず反映先がないため、全て安全な no-op とする。
+      getView: () => ({ ...FALLBACK_DEFAULT_VIEW }),
+      setView: () => {},
+      setZoomLimits: () => {},
+      registerInputSource: () => {},
+      setKeymap: () => {},
+    };
+    const degradedGallery: GalleryCapability = {
+      // 縮退ハンドルには Renderer が存在せず写真を反映できないため、全て安全な no-op とする
+      // （`interaction` と同じ思想。同期 API のため `loadImage` のような reject はしない）。
+      setPhotos: () => {},
+      next: () => {},
+      prev: () => {},
+      goTo: () => {},
+      getPhotoIndex: () => -1,
+      getPhotoCount: () => 0,
+    };
+    const degradedFullscreen: FullscreenCapability = {
+      // FullscreenManager は Renderer に依存しないため、縮退ハンドルでも実機能として渡す
+      // （interaction/gallery とは異なる扱い。本ステージの発見、code-summary.md 参照）。
+      enterFullscreen,
+      exitFullscreen,
+      isFullscreen,
+    };
+
+    // ControlsUI も Renderer に依存しないため、縮退ハンドルでも構築する（UoW-F の先例を踏襲した
+    // 本ステージの発見）。modeSwitch/photoNav/photoIndicator は該当データなしで自動非表示になり、
+    // 実質的にフルスクリーンボタンのみが機能する縮退 UI として自然にフォールバックする。
+    const controlsUI = buildControlsUI({
+      container,
+      inBrowser,
+      options,
+      eventBus,
+      disposables,
+      getMode,
+      modeSwitching: degradedModeSwitching,
+      interaction: degradedInteraction,
+      gallery: degradedGallery,
+      fullscreen: degradedFullscreen,
+    });
+
     const handle = buildHandle({
       eventBus,
       state,
       disposables,
       errorManager,
       imageLoading: null,
-      modeSwitching: {
-        // BR-C-02 相当の最小限の挙動。縮退ハンドルには Renderer が存在せずモード適用先がないため、
-        // 'standard' のみ有効な no-op として扱い、他は INVALID_INPUT とする。
-        setMode: (mode) => {
-          if (mode !== "standard") {
-            errorManager.report("INVALID_INPUT", INVALID_MODE_MESSAGE);
-          }
-        },
-        registerMode: () => {
-          // 縮退ハンドルでは登録しても反映先がないため no-op。
-        },
-        listModes: () => ["standard"],
-      },
-      interaction: {
-        // 縮退ハンドルには Renderer/ModeContext が存在せず反映先がないため、全て安全な no-op とする。
-        getView: () => ({ ...FALLBACK_DEFAULT_VIEW }),
-        setView: () => {},
-        setZoomLimits: () => {},
-        registerInputSource: () => {},
-        setKeymap: () => {},
-      },
-      gallery: {
-        // 縮退ハンドルには Renderer が存在せず写真を反映できないため、全て安全な no-op とする
-        // （`interaction` と同じ思想。同期 API のため `loadImage` のような reject はしない）。
-        setPhotos: () => {},
-        next: () => {},
-        prev: () => {},
-        goTo: () => {},
-        getPhotoIndex: () => -1,
-      },
-      fullscreen: {
-        // FullscreenManager は Renderer に依存しないため、縮退ハンドルでも実機能として渡す
-        // （interaction/gallery とは異なる扱い。本ステージの発見、code-summary.md 参照）。
-        enterFullscreen,
-        exitFullscreen,
-        isFullscreen,
+      modeSwitching: degradedModeSwitching,
+      interaction: degradedInteraction,
+      gallery: degradedGallery,
+      fullscreen: degradedFullscreen,
+      controls: {
+        setVisibility: (config) => controlsUI?.setVisibility(config),
+        setText: (overrides) => controlsUI?.setText(overrides),
       },
     });
 
@@ -414,6 +447,7 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
       eventBus.emit("photochange", {
         type: "photochange",
         index,
+        total: gallery.size, // BR-G-07
         ...(normalized.id !== undefined && { id: normalized.id }),
       });
     } catch (error) {
@@ -462,6 +496,10 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
 
   function getPhotoIndex(): number {
     return state.photoIndex;
+  }
+
+  function getPhotoCount(): number {
+    return gallery.size; // BR-G-07
   }
 
   function setMode(mode: ViewerModeId, _options?: ModeChangeOptions): void {
@@ -531,6 +569,19 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
     keyboardInputSource.setKeymap(map);
   }
 
+  const controlsUI = buildControlsUI({
+    container,
+    inBrowser,
+    options,
+    eventBus,
+    disposables,
+    getMode,
+    modeSwitching: { setMode, registerMode, listModes },
+    interaction: { getView, setView, setZoomLimits, registerInputSource, setKeymap },
+    gallery: { setPhotos, next, prev, goTo, getPhotoIndex, getPhotoCount },
+    fullscreen: { enterFullscreen, exitFullscreen, isFullscreen },
+  });
+
   const handle = buildHandle({
     eventBus,
     state,
@@ -539,8 +590,12 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
     imageLoading: { loadImage, registerSource },
     modeSwitching: { setMode, registerMode, listModes },
     interaction: { getView, setView, setZoomLimits, registerInputSource, setKeymap },
-    gallery: { setPhotos, next, prev, goTo, getPhotoIndex },
+    gallery: { setPhotos, next, prev, goTo, getPhotoIndex, getPhotoCount },
     fullscreen: { enterFullscreen, exitFullscreen, isFullscreen },
+    controls: {
+      setVisibility: (config) => controlsUI?.setVisibility(config),
+      setText: (overrides) => controlsUI?.setText(overrides),
+    },
   });
 
   // BR-A-04: ready イベントもマイクロタスクまで発火を遅延する（同じ運用上の理由）。
@@ -577,12 +632,19 @@ interface GalleryCapability {
   prev: () => void;
   goTo: (index: number) => void;
   getPhotoIndex: () => number;
+  /** 設定済み写真の総数（BR-G-07）。 */
+  getPhotoCount: () => number;
 }
 
 interface FullscreenCapability {
   enterFullscreen: () => Promise<void>;
   exitFullscreen: () => Promise<void>;
   isFullscreen: () => boolean;
+}
+
+interface ControlsCapability {
+  setVisibility: (config: Partial<ControlsVisibility>) => void;
+  setText: (overrides: Partial<UITextMap>) => void;
 }
 
 interface HandleDeps {
@@ -602,6 +664,11 @@ interface HandleDeps {
    * （`interaction`/`gallery` とは異なる扱い。真の SSR でのみ内部で安全な no-op になる）。
    */
   fullscreen: FullscreenCapability;
+  /**
+   * `ControlsUI` が構築されていない（ヘッドレス、BR-G-03）場合は呼び出し先が安全な no-op になる
+   * （`controlsUI?.setVisibility(...)` 等、BR-G-15）。
+   */
+  controls: ControlsCapability;
 }
 
 function buildHandle({
@@ -614,6 +681,7 @@ function buildHandle({
   interaction,
   gallery,
   fullscreen,
+  controls,
 }: HandleDeps): ViewerHandle {
   const guardDisposed = (): boolean => {
     if (disposables.isDisposed) {
@@ -704,6 +772,10 @@ function buildHandle({
       guardDisposed();
       return gallery.getPhotoIndex();
     },
+    getPhotoCount(): number {
+      guardDisposed();
+      return gallery.getPhotoCount();
+    },
     async enterFullscreen(): Promise<void> {
       if (!guardDisposed()) return;
       return fullscreen.enterFullscreen();
@@ -716,9 +788,82 @@ function buildHandle({
       guardDisposed();
       return fullscreen.isFullscreen();
     },
+    setControlsVisibility(config: Partial<ControlsVisibility>): void {
+      if (!guardDisposed()) return;
+      controls.setVisibility(config);
+    },
+    setText(overrides: Partial<UITextMap>): void {
+      if (!guardDisposed()) return;
+      controls.setText(overrides);
+    },
     dispose(): void {
       // BR-A-10: 冪等。2回目以降は no-op（警告なし。BR-A-09 は「他のメソッド」向け）。
       disposables.disposeAll();
     },
   };
+}
+
+interface BuildControlsUIParams {
+  container: HTMLElement;
+  inBrowser: boolean;
+  options: ViewerOptions | undefined;
+  eventBus: EventBus;
+  disposables: DisposableRegistry;
+  getMode: () => ViewerModeId;
+  modeSwitching: ModeSwitchingCapability;
+  interaction: InteractionCapability;
+  gallery: GalleryCapability;
+  fullscreen: FullscreenCapability;
+}
+
+/**
+ * `ControlsUI`（UoW-G、L4）を構築する。`ControlsUI` は DOM のみに依存し Renderer/WebGL に
+ * 依存しないため、`inBrowser`（真の SSR でない）であれば縮退ハンドル（WebGL2 非対応）でも構築する
+ * （`FullscreenManager` と同じ思想、本ステージの発見）。`options.controls === false` の場合は
+ * 完全ヘッドレスとして構築しない（BR-G-03）。
+ */
+function buildControlsUI(params: BuildControlsUIParams): ControlsUI | null {
+  const {
+    container,
+    inBrowser,
+    options,
+    eventBus,
+    disposables,
+    getMode,
+    modeSwitching,
+    interaction,
+    gallery,
+    fullscreen,
+  } = params;
+  if (!inBrowser || options?.controls === false) return null;
+
+  const deps: ControlsUIDeps = {
+    getMode,
+    setMode: modeSwitching.setMode,
+    listModes: modeSwitching.listModes,
+    getView: interaction.getView,
+    setView: interaction.setView,
+    getPhotoIndex: gallery.getPhotoIndex,
+    getPhotoCount: gallery.getPhotoCount,
+    next: gallery.next,
+    prev: gallery.prev,
+    goTo: gallery.goTo,
+    enterFullscreen: fullscreen.enterFullscreen,
+    exitFullscreen: fullscreen.exitFullscreen,
+    isFullscreen: fullscreen.isFullscreen,
+    on<K extends ViewerEventType>(type: K, handler: (event: ViewerEventMap[K]) => void): void {
+      eventBus.on(type, handler);
+    },
+    off<K extends ViewerEventType>(type: K, handler: (event: ViewerEventMap[K]) => void): void {
+      eventBus.off(type, handler);
+    },
+  };
+
+  const initialVisibility: ControlsVisibility =
+    typeof options?.controls === "object" ? options.controls : {};
+  const initialText: UITextMap = options?.text ?? {};
+
+  const controlsUI = new ControlsUI(container, deps, initialVisibility, initialText);
+  disposables.register(() => controlsUI.dispose());
+  return controlsUI;
 }

@@ -166,7 +166,7 @@ describe("createViewer — gallery (UoW-E)", () => {
     await flushMicrotasks();
 
     expect(handle.getPhotoIndex()).toBe(0);
-    expect(onPhotoChange).toHaveBeenCalledWith({ type: "photochange", index: 0 });
+    expect(onPhotoChange).toHaveBeenCalledWith({ type: "photochange", index: 0, total: 3 });
     expect(rendererInstances[0]?.setSphereTexture).toHaveBeenCalledTimes(1);
   });
 
@@ -200,6 +200,7 @@ describe("createViewer — gallery (UoW-E)", () => {
     expect(onPhotoChange).toHaveBeenCalledWith({
       type: "photochange",
       index: 1,
+      total: 3,
       id: "photo-b",
     });
   });
