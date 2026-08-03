@@ -98,6 +98,6 @@
 
 ## 次のステップ（Step 6: 成果物生成、承認後）
 
-- `aidlc-docs/construction/uow-c/functional-design/domain-entities.md`
-- `aidlc-docs/construction/uow-c/functional-design/business-rules.md`
-- `aidlc-docs/construction/uow-c/functional-design/business-logic-model.md`
+- [x] `aidlc-docs/construction/uow-c/functional-design/domain-entities.md`
+- [x] `aidlc-docs/construction/uow-c/functional-design/business-rules.md`
+- [x] `aidlc-docs/construction/uow-c/functional-design/business-logic-model.md`
