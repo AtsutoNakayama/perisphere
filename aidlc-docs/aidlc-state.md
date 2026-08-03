@@ -68,6 +68,17 @@
 
 **UoW-B Per-Unit Loop 完了（2026-08-03）。「1枚の画像を標準ビューで表示」という最初の縦切り到達点（UoW-A+UoW-B）が完成。**
 
+#### UoW-C 投影モード（[#36](https://github.com/AtsutoNakayama/perisphere/issues/36) / ブランチ `feat/36-uow-c-modes`）
+
+- [x] Functional Design（Q1〜Q6 回答確定〔全て推奨案採用〕。成果物 `construction/uow-c/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。実装方式をハイブリッド確定（カメラベース: UltraWide/Linear、シェーダベース: Dewarp/Panini/TinyPlanet、外部カメラ: CrystalBall）。UoW-A `Renderer`/`ModeContext` への拡張点（`setSphereMaterial`・`texture` フィールド）を明記。**ユーザー承認: 2026-08-03**）
+- [x] NFR Requirements（成果物 `construction/uow-c/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。UoW-Bとの統合欠陥を発見・対応方針確定（Renderer.setSphereTextureのマテリアル非依存化）。ShaderMaterialのモードごとキャッシュ、投影数式のTS純粋関数切り出し+PBT。**ユーザー承認: 2026-08-03**）
+- [x] NFR Design（成果物 `construction/uow-c/nfr-design/`: nfr-design-patterns.md / logical-components.md。Resilience: シェーダ欠陥への実行時フォールバック不採用、Performance: ジオメトリ共用+ShaderMaterialキャッシュ、L1〜L5論理コンポーネント確定。**ユーザー承認: 2026-08-03**）
+- [x] Infrastructure Design（成果物 `construction/uow-c/infrastructure-design/`: infrastructure-design.md / deployment-architecture.md。インフラ変更なし。**ユーザー承認: 2026-08-03**）
+- [x] Code Generation（成果物 `construction/plans/uow-c-code-generation-plan.md`（Step 2〜5,7 全完了）、`packages/core/src/modes/` 新規一式、`viewer/` への拡張、`construction/uow-c/code/code-summary.md`。テスト17ファイル128件（UoW-A/B既存66件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green。**ユーザー承認: 2026-08-03**）
+- [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
+
+**UoW-C Per-Unit Loop 完了（2026-08-03）。標準以外の6モード（UltraWide/Dewarp/Linear/Panini/TinyPlanet/CrystalBall）+ カスタムモード登録機構が完成。**
+
 ## Notes
 
 - 監査ログ `aidlc-docs/audit.md` はリポジトリ方針によりローカル限定（`.gitignore` 済み）。

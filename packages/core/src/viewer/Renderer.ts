@@ -4,10 +4,11 @@ import {
   MeshBasicMaterial,
   PerspectiveCamera,
   Scene,
+  ShaderMaterial,
   SphereGeometry,
   WebGLRenderer,
 } from "three";
-import type { Texture } from "three";
+import type { Material, Texture } from "three";
 
 import { ContextRecoveryState } from "./ContextRecoveryState.js";
 import type { ModeContext } from "./ModeContext.js";
@@ -39,19 +40,27 @@ interface SceneGraph {
 }
 
 /**
- * プレースホルダ球体メッシュのマテリアルへテクスチャを適用/解除する純粋ロジック（BR-B-09）。
+ * 球体メッシュのマテリアルへテクスチャを適用/解除する純粋ロジック（BR-B-09、UoW-C でマテリアル種別分岐に拡張）。
  * `Renderer` インスタンス（WebGL コンテキストを要する）から独立してテスト可能にするため関数として切り出す。
+ * `MeshBasicMaterial` は `.map`、`ShaderMaterial`（UoW-C 導入）は `uniforms.map`（規約名）を更新する（NFR Requirements Q2）。
  */
-export function applySphereTexture(material: MeshBasicMaterial, texture: Texture | null): void {
-  material.map = texture;
-  material.color.set(texture ? TEXTURED_COLOR : PLACEHOLDER_COLOR);
-  material.needsUpdate = true;
+export function applySphereTexture(material: Material, texture: Texture | null): void {
+  if (material instanceof MeshBasicMaterial) {
+    material.map = texture;
+    material.color.set(texture ? TEXTURED_COLOR : PLACEHOLDER_COLOR);
+    material.needsUpdate = true;
+    return;
+  }
+  if (material instanceof ShaderMaterial && material.uniforms.map) {
+    material.uniforms.map.value = texture;
+    material.needsUpdate = true;
+  }
 }
 
 /**
- * シーン・カメラ・WebGL レンダラ・プレースホルダ球体メッシュを保持する（domain-entities.md E3）。
+ * シーン・カメラ・WebGL レンダラ・球体メッシュを保持する（domain-entities.md E3）。
  * 単一描画ループ（PP-1/PP-3）とコンテキストロスト検出/復帰（RP-1〜3, L5）を担う。
- * 画像テクスチャは扱わない（BR-A-15、UoW-B の責務）。
+ * 画像テクスチャ自体は扱わない（BR-A-15、UoW-B の責務）。UoW-C でモード別マテリアルの差し替えに対応。
  */
 export class Renderer {
   private readonly container: HTMLElement;
@@ -63,6 +72,9 @@ export class Renderer {
   private camera: PerspectiveCamera;
   private sphereMesh: Mesh;
   private webglRenderer: WebGLRenderer;
+  /** Renderer 自身が所有する既定マテリアル（プレースホルダ/通常表示用）。シェーダベースモードのマテリアルはモードが所有する。 */
+  private defaultMaterial: MeshBasicMaterial;
+  private currentTexture: Texture | null = null;
 
   private activeMode: ViewerMode | null = null;
   private rafHandle: number | null = null;
@@ -76,6 +88,7 @@ export class Renderer {
     this.camera = graph.camera;
     this.sphereMesh = graph.sphereMesh;
     this.webglRenderer = graph.webglRenderer;
+    this.defaultMaterial = this.sphereMesh.material as MeshBasicMaterial;
     this.canvas = this.webglRenderer.domElement;
 
     this.canvas.addEventListener("webglcontextlost", this.handleContextLost);
@@ -83,7 +96,13 @@ export class Renderer {
   }
 
   get modeContext(): ModeContext {
-    return { camera: this.camera, scene: this.scene, sphereMesh: this.sphereMesh };
+    return {
+      camera: this.camera,
+      scene: this.scene,
+      sphereMesh: this.sphereMesh,
+      texture: this.currentTexture,
+      setSphereMaterial: (material) => this.setSphereMaterial(material),
+    };
   }
 
   get contextState() {
@@ -100,12 +119,23 @@ export class Renderer {
   }
 
   /**
-   * プレースホルダ球体メッシュへテクスチャを反映する（BR-B-09）。
-   * `texture` が `null` の場合はプレースホルダの無地マテリアルへ戻す。
+   * 球体メッシュへテクスチャを反映する（BR-B-09）。`texture` が `null` の場合はプレースホルダの無地表示へ戻す。
    * テクスチャ自体の dispose はこのメソッドの責務外（呼び出し元が管理する、L1/BR-B-15）。
    */
   setSphereTexture(texture: Texture | null): void {
-    applySphereTexture(this.sphereMesh.material as MeshBasicMaterial, texture);
+    this.currentTexture = texture;
+    applySphereTexture(this.sphereMesh.material, texture);
+  }
+
+  /**
+   * 球体メッシュのマテリアルを差し替える（BR-C-08、UoW-C 拡張）。`material` が `null` の場合は
+   * `Renderer` 既定の `MeshBasicMaterial` へ戻す（BR-C-09）。差し替え後、現在のテクスチャを
+   * 新しいマテリアルへ自動的に反映する（マテリアル種別に応じた分岐は `applySphereTexture` が担う）。
+   */
+  setSphereMaterial(material: Material | null): void {
+    const next = material ?? this.defaultMaterial;
+    applySphereTexture(next, this.currentTexture);
+    this.sphereMesh.material = next;
   }
 
   /** requestAnimationFrame ハンドルを1つだけ保持する（PP-3 / BR-A-18）。 */
@@ -168,6 +198,7 @@ export class Renderer {
       this.camera = graph.camera;
       this.sphereMesh = graph.sphereMesh;
       this.webglRenderer = graph.webglRenderer;
+      this.defaultMaterial = this.sphereMesh.material as MeshBasicMaterial;
       this.activeMode?.apply(this.modeContext);
       return true;
     } catch {
@@ -177,7 +208,10 @@ export class Renderer {
 
   private disposeSceneResources(): void {
     this.sphereMesh.geometry.dispose();
-    (this.sphereMesh.material as MeshBasicMaterial).dispose();
+    // シェーダベースモードが所有する ShaderMaterial はここでは破棄しない（BR-C-09、Viewer dispose 時にモード側が破棄）。
+    if (this.sphereMesh.material === this.defaultMaterial) {
+      this.defaultMaterial.dispose();
+    }
     this.webglRenderer.dispose();
   }
 
