@@ -1,3 +1,5 @@
+import type { ImageInput, ImageSourceAdapter } from "../loader/types.js";
+
 /** UoW-A で有効な唯一のビューワーモード識別子。他モードは UoW-C 以降で追加される。 */
 export type ViewerModeId = "standard";
 
@@ -28,11 +30,15 @@ export interface PerisphereError {
   message: string;
 }
 
+/** 画像ロードの進捗状態（UoW-A の `loadState`＝初期化状態とは別概念、BR-B-10/BR-A-16）。 */
+export type ImageLoadState = "idle" | "loading" | "ready" | "error";
+
 export interface ViewerState {
   mode: ViewerModeId;
   ready: boolean;
   loadState: "idle" | "loading" | "ready" | "error";
   lastError: PerisphereError | null;
+  imageLoadState: ImageLoadState;
 }
 
 export interface ReadyEvent {
@@ -49,11 +55,19 @@ export interface ModeChangeEvent {
   mode: ViewerModeId;
 }
 
+/** 画像ロードの進行通知（BR-B-07、スロットリング済み）。DOM 標準の `ProgressEvent` とは無関係。 */
+export interface ImageProgressEvent {
+  type: "progress";
+  loaded: number;
+  total?: number;
+}
+
 /** {@link ViewerHandle.on} などで購読できるイベントの型マップ。 */
 export interface ViewerEventMap {
   ready: ReadyEvent;
   error: ErrorEvent;
   modechange: ModeChangeEvent;
+  progress: ImageProgressEvent;
 }
 
 export type ViewerEventType = keyof ViewerEventMap;
@@ -79,6 +93,15 @@ export interface ViewerHandle {
   getMode(): ViewerModeId;
   /** ビューワーモードを切り替える。`'standard'` 以外を渡すと `error` イベント（`INVALID_INPUT`）が発火する。 */
   setMode(mode: ViewerModeId): void;
+
+  /**
+   * 画像を読み込み、標準ビューに反映する。
+   * 進行中に再度呼び出すと前回のロードは中断される（BR-B-08）。
+   * 失敗時は `error` イベントを発火しつつ `Promise` を reject し、直前の表示は維持される（BR-B-11）。
+   */
+  loadImage(input: ImageInput): Promise<void>;
+  /** 独自の画像ソースアダプタを登録する（US-04）。既定の `EquirectangularSource` より優先される。 */
+  registerSource(adapter: ImageSourceAdapter): void;
 
   /** ビューワーが保持するリソースを解放する。複数回呼び出しても安全（冪等）。 */
   dispose(): void;

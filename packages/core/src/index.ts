@@ -1,5 +1,6 @@
 export { createViewer } from "./viewer/createViewer.js";
 export type {
+  ImageProgressEvent,
   PerisphereError,
   PerisphereErrorCode,
   ViewerEventMap,
@@ -10,3 +11,9 @@ export type {
   ViewState,
   ZoomLimits,
 } from "./viewer/types.js";
+export type {
+  ImageInput,
+  ImageSourceAdapter,
+  SourceContext,
+  SourceResult,
+} from "./loader/types.js";

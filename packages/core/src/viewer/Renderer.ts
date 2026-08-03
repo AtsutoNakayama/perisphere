@@ -7,6 +7,7 @@ import {
   SphereGeometry,
   WebGLRenderer,
 } from "three";
+import type { Texture } from "three";
 
 import { ContextRecoveryState } from "./ContextRecoveryState.js";
 import type { ModeContext } from "./ModeContext.js";
@@ -18,6 +19,8 @@ const SPHERE_HEIGHT_SEGMENTS = 40;
 const CAMERA_FOV = 75;
 const CAMERA_NEAR = 0.1;
 const CAMERA_FAR = 1000;
+const PLACEHOLDER_COLOR = 0x808080;
+const TEXTURED_COLOR = 0xffffff;
 
 export interface RendererCallbacks {
   /** healthy -> lost 遷移時（BR-A-12）。呼び出し側で error(CONTEXT_LOST) を発火する。 */
@@ -33,6 +36,16 @@ interface SceneGraph {
   camera: PerspectiveCamera;
   sphereMesh: Mesh;
   webglRenderer: WebGLRenderer;
+}
+
+/**
+ * プレースホルダ球体メッシュのマテリアルへテクスチャを適用/解除する純粋ロジック（BR-B-09）。
+ * `Renderer` インスタンス（WebGL コンテキストを要する）から独立してテスト可能にするため関数として切り出す。
+ */
+export function applySphereTexture(material: MeshBasicMaterial, texture: Texture | null): void {
+  material.map = texture;
+  material.color.set(texture ? TEXTURED_COLOR : PLACEHOLDER_COLOR);
+  material.needsUpdate = true;
 }
 
 /**
@@ -77,8 +90,22 @@ export class Renderer {
     return this.contextRecoveryState.value;
   }
 
+  /** WebGL2 コンテキストの最大テクスチャサイズ（`SourceContext.maxTextureSize` の情報源、BR-B-05）。 */
+  get maxTextureSize(): number {
+    return this.webglRenderer.capabilities.maxTextureSize;
+  }
+
   setActiveMode(mode: ViewerMode): void {
     this.activeMode = mode;
+  }
+
+  /**
+   * プレースホルダ球体メッシュへテクスチャを反映する（BR-B-09）。
+   * `texture` が `null` の場合はプレースホルダの無地マテリアルへ戻す。
+   * テクスチャ自体の dispose はこのメソッドの責務外（呼び出し元が管理する、L1/BR-B-15）。
+   */
+  setSphereTexture(texture: Texture | null): void {
+    applySphereTexture(this.sphereMesh.material as MeshBasicMaterial, texture);
   }
 
   /** requestAnimationFrame ハンドルを1つだけ保持する（PP-3 / BR-A-18）。 */
@@ -170,7 +197,7 @@ export class Renderer {
       SPHERE_WIDTH_SEGMENTS,
       SPHERE_HEIGHT_SEGMENTS,
     );
-    const material = new MeshBasicMaterial({ color: 0x808080, side: BackSide });
+    const material = new MeshBasicMaterial({ color: PLACEHOLDER_COLOR, side: BackSide });
     const sphereMesh = new Mesh(geometry, material);
     scene.add(sphereMesh);
 
