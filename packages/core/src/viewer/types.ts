@@ -36,7 +36,8 @@ export type PerisphereErrorCode =
   | "WEBGL_UNSUPPORTED"
   | "CONTEXT_LOST"
   | "INVALID_INPUT"
-  | "UNSUPPORTED_FORMAT";
+  | "UNSUPPORTED_FORMAT"
+  | "FULLSCREEN_FAILED";
 
 /** message は内部詳細（スタックトレース・内部パス）を含まない利用者向け安全な文言のみ（BR-A-13）。 */
 export interface PerisphereError {
@@ -60,6 +61,8 @@ export interface ViewerState {
    * `Gallery` 内部の目標ポインタとは別の「表示中（confirmed）」ポインタ（UoW-E `BR-E-13`）。
    */
   photoIndex: number;
+  /** 現在フルスクリーン表示中かどうか（ネイティブ・擬似いずれも `true`、UoW-F）。 */
+  isFullscreen: boolean;
 }
 
 export interface ReadyEvent {
@@ -101,6 +104,15 @@ export interface PhotoChangeEvent {
   id?: string;
 }
 
+/**
+ * フルスクリーン状態変化通知（UoW-F、BR-F-05）。自らの `enterFullscreen()`/`exitFullscreen()`
+ * 呼び出し・外部要因（Esc キー等）によるネイティブフルスクリーン終了のいずれでも発火する。
+ */
+export interface FullscreenChangeEvent {
+  type: "fullscreenchange";
+  active: boolean;
+}
+
 /** {@link ViewerHandle.on} などで購読できるイベントの型マップ。 */
 export interface ViewerEventMap {
   ready: ReadyEvent;
@@ -110,6 +122,7 @@ export interface ViewerEventMap {
   viewchange: ViewChangeEvent;
   zoomchange: ZoomChangeEvent;
   photochange: PhotoChangeEvent;
+  fullscreenchange: FullscreenChangeEvent;
 }
 
 export type ViewerEventType = keyof ViewerEventMap;
@@ -195,6 +208,19 @@ export interface ViewerHandle {
   goTo(index: number): void;
   /** 現在表示中の写真インデックスを返す。写真が一度も設定されていなければ `-1`。 */
   getPhotoIndex(): number;
+
+  /**
+   * フルスクリーン表示に切り替える（US-21）。対応環境ではネイティブ Fullscreen API を、
+   * 非対応環境（iOS Safari 等）では擬似フルスクリーンを使用する（BR-F-02）。
+   * 既にフルスクリーン中の場合は何もせず解決する（BR-F-01）。
+   * 対応環境で実行時に拒否された場合は `error`（`FULLSCREEN_FAILED`）を発火しつつ reject する
+   * （BR-F-04）。
+   */
+  enterFullscreen(): Promise<void>;
+  /** フルスクリーン表示を解除する（US-21）。既に非フルスクリーンの場合は何もせず解決する。 */
+  exitFullscreen(): Promise<void>;
+  /** 現在フルスクリーン表示中かどうかを返す（ネイティブ・擬似いずれも `true`）。 */
+  isFullscreen(): boolean;
 
   /** ビューワーが保持するリソースを解放する。複数回呼び出しても安全（冪等）。 */
   dispose(): void;

@@ -28,6 +28,7 @@ vi.mock("../Renderer.js", async () => {
     stopLoop = vi.fn();
     dispose = vi.fn();
     setActiveMode = vi.fn();
+    resize = vi.fn();
     setSphereTexture = vi.fn();
     setSphereMaterial = vi.fn();
     maxTextureSize = 4096;

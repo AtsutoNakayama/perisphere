@@ -1,5 +1,6 @@
 export { createViewer } from "./viewer/createViewer.js";
 export type {
+  FullscreenChangeEvent,
   ImageProgressEvent,
   ModeChangeOptions,
   PerisphereError,

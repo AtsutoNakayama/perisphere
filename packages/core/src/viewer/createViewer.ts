@@ -1,3 +1,4 @@
+import { FullscreenManager } from "../fullscreen/FullscreenManager.js";
 import { Gallery, normalizePhotoInput } from "../gallery/Gallery.js";
 import type { PhotoInput } from "../gallery/types.js";
 import { InputManager } from "../interaction/InputManager.js";
@@ -47,6 +48,7 @@ const INVALID_VIEW_MESSAGE = "The provided view contains a non-finite value.";
 const INVALID_ZOOM_LIMITS_MESSAGE =
   "The provided zoom limits are invalid (non-finite, or minFov is not less than maxFov).";
 const INVALID_PHOTO_INDEX_MESSAGE = "The provided photo index is not an integer within range.";
+const FULLSCREEN_FAILED_MESSAGE = "Failed to enter or exit fullscreen mode.";
 
 function isBrowserEnvironment(): boolean {
   // BR-A-01: SSR セーフな環境ガード。
@@ -82,7 +84,48 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
   const errorManager = new ErrorManager(state, eventBus);
   const disposables = new DisposableRegistry();
 
-  const supported = isBrowserEnvironment() && canObtainWebGL2Context();
+  const inBrowser = isBrowserEnvironment();
+  const supported = inBrowser && canObtainWebGL2Context();
+
+  // BR-F-09: フルスクリーン切替時にリサイズ追従させる対象。縮退ハンドル（WebGL2 非対応）では
+  // null のまま（resize() を呼んでも安全に no-op）。
+  let activeRenderer: Renderer | null = null;
+
+  // FullscreenManager は container/document のみに依存し Renderer/WebGL に依存しないため、
+  // interaction/gallery とは異なり WebGL2 非対応でも実機能として提供する（本ステージの発見）。
+  // 真の SSR（window/document 自体が存在しない環境）でのみ構築しない。
+  const fullscreenManager = inBrowser
+    ? new FullscreenManager(container, (active) => {
+        state.isFullscreen = active;
+        eventBus.emit("fullscreenchange", { type: "fullscreenchange", active });
+        activeRenderer?.resize();
+      })
+    : null;
+  if (fullscreenManager) {
+    disposables.register(() => fullscreenManager.dispose());
+  }
+
+  async function enterFullscreen(): Promise<void> {
+    if (!fullscreenManager) return; // 真の SSR では安全な no-op
+    try {
+      await fullscreenManager.enter();
+    } catch {
+      throw errorManager.report("FULLSCREEN_FAILED", FULLSCREEN_FAILED_MESSAGE);
+    }
+  }
+
+  async function exitFullscreen(): Promise<void> {
+    if (!fullscreenManager) return;
+    try {
+      await fullscreenManager.exit();
+    } catch {
+      throw errorManager.report("FULLSCREEN_FAILED", FULLSCREEN_FAILED_MESSAGE);
+    }
+  }
+
+  function isFullscreen(): boolean {
+    return fullscreenManager?.isActive() ?? false;
+  }
 
   if (!supported) {
     // BR-A-03: 縮退時のエラー正規化（原因を区別せず WEBGL_UNSUPPORTED に正規化）。
@@ -124,6 +167,13 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
         prev: () => {},
         goTo: () => {},
         getPhotoIndex: () => -1,
+      },
+      fullscreen: {
+        // FullscreenManager は Renderer に依存しないため、縮退ハンドルでも実機能として渡す
+        // （interaction/gallery とは異なる扱い。本ステージの発見、code-summary.md 参照）。
+        enterFullscreen,
+        exitFullscreen,
+        isFullscreen,
       },
     });
 
@@ -176,6 +226,7 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
       }
     },
   });
+  activeRenderer = renderer; // BR-F-09
 
   // BR-C-01: 全7モードを登録順（FR-03 の列挙順）で ModeRegistry へ登録する。
   const modeRegistry = new ModeRegistry();
@@ -234,7 +285,9 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
         prev();
         break;
       case "toggleFullscreen":
-        // BR-D-16: UoW-F（フルスクリーン）が未実装のため安全に無視する。
+        // BR-F-07: UoW-D 時点の no-op（BR-D-16）を解消する。失敗時の error 発火は
+        // enterFullscreen/exitFullscreen 側で既に行われるため、ここでは reject を握りつぶすのみ。
+        (isFullscreen() ? exitFullscreen() : enterFullscreen()).catch(() => {});
         break;
     }
   }
@@ -487,6 +540,7 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
     modeSwitching: { setMode, registerMode, listModes },
     interaction: { getView, setView, setZoomLimits, registerInputSource, setKeymap },
     gallery: { setPhotos, next, prev, goTo, getPhotoIndex },
+    fullscreen: { enterFullscreen, exitFullscreen, isFullscreen },
   });
 
   // BR-A-04: ready イベントもマイクロタスクまで発火を遅延する（同じ運用上の理由）。
@@ -525,6 +579,12 @@ interface GalleryCapability {
   getPhotoIndex: () => number;
 }
 
+interface FullscreenCapability {
+  enterFullscreen: () => Promise<void>;
+  exitFullscreen: () => Promise<void>;
+  isFullscreen: () => boolean;
+}
+
 interface HandleDeps {
   eventBus: EventBus;
   state: ReturnType<typeof createViewerState>;
@@ -537,6 +597,11 @@ interface HandleDeps {
   interaction: InteractionCapability;
   /** 縮退ハンドルでも安全な no-op 実装を持つため null にはしない（`interaction` と同じ思想）。 */
   gallery: GalleryCapability;
+  /**
+   * 縮退ハンドル（WebGL2 非対応）でも Renderer に依存しない実機能をそのまま渡す
+   * （`interaction`/`gallery` とは異なる扱い。真の SSR でのみ内部で安全な no-op になる）。
+   */
+  fullscreen: FullscreenCapability;
 }
 
 function buildHandle({
@@ -548,6 +613,7 @@ function buildHandle({
   modeSwitching,
   interaction,
   gallery,
+  fullscreen,
 }: HandleDeps): ViewerHandle {
   const guardDisposed = (): boolean => {
     if (disposables.isDisposed) {
@@ -637,6 +703,18 @@ function buildHandle({
     getPhotoIndex(): number {
       guardDisposed();
       return gallery.getPhotoIndex();
+    },
+    async enterFullscreen(): Promise<void> {
+      if (!guardDisposed()) return;
+      return fullscreen.enterFullscreen();
+    },
+    async exitFullscreen(): Promise<void> {
+      if (!guardDisposed()) return;
+      return fullscreen.exitFullscreen();
+    },
+    isFullscreen(): boolean {
+      guardDisposed();
+      return fullscreen.isFullscreen();
     },
     dispose(): void {
       // BR-A-10: 冪等。2回目以降は no-op（警告なし。BR-A-09 は「他のメソッド」向け）。

@@ -26,6 +26,7 @@ vi.mock("../Renderer.js", async () => {
     stopLoop = vi.fn();
     dispose = vi.fn();
     setActiveMode = vi.fn();
+    resize = vi.fn();
     modeContext = {
       camera: new PerspectiveCamera(),
       scene: new Scene(),
