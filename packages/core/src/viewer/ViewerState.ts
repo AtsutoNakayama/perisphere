@@ -19,5 +19,6 @@ export function createViewerState(): ViewerState {
     lastError: null,
     imageLoadState: "idle",
     view: { ...FALLBACK_DEFAULT_VIEW },
+    photoIndex: -1,
   };
 }

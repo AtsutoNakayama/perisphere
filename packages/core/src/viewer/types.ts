@@ -1,3 +1,4 @@
+import type { PhotoInput } from "../gallery/types.js";
 import type { ImageInput, ImageSourceAdapter } from "../loader/types.js";
 import type { InputSource, Keymap } from "../interaction/types.js";
 import type { ViewerMode } from "./ViewerMode.js";
@@ -54,6 +55,11 @@ export interface ViewerState {
   imageLoadState: ImageLoadState;
   /** 現在の視点（yaw/pitch/fov）。UoW-D で追加（`domain-entities.md` E9）。 */
   view: ViewState;
+  /**
+   * 現在表示中（ロード成功が確定済み）の写真インデックス。写真が一度も設定されていなければ `-1`。
+   * `Gallery` 内部の目標ポインタとは別の「表示中（confirmed）」ポインタ（UoW-E `BR-E-13`）。
+   */
+  photoIndex: number;
 }
 
 export interface ReadyEvent {
@@ -88,6 +94,13 @@ export interface ZoomChangeEvent {
   fov: number;
 }
 
+/** 写真切替通知（BR-E-07）。ロードが成功した場合にのみ発火する。 */
+export interface PhotoChangeEvent {
+  type: "photochange";
+  index: number;
+  id?: string;
+}
+
 /** {@link ViewerHandle.on} などで購読できるイベントの型マップ。 */
 export interface ViewerEventMap {
   ready: ReadyEvent;
@@ -96,6 +109,7 @@ export interface ViewerEventMap {
   progress: ImageProgressEvent;
   viewchange: ViewChangeEvent;
   zoomchange: ZoomChangeEvent;
+  photochange: PhotoChangeEvent;
 }
 
 export type ViewerEventType = keyof ViewerEventMap;
@@ -164,6 +178,23 @@ export interface ViewerHandle {
   registerInputSource(source: InputSource): void;
   /** キーマップを変更する（US-19）。`null` はキーボード操作全体を無効化する。 */
   setKeymap(map: Partial<Keymap> | null): void;
+
+  /**
+   * 写真リストを設定する（US-23）。インデックスは `0` にリセットされ、1枚目のロードが
+   * 自動的に開始される（BR-E-02）。
+   */
+  setPhotos(photos: readonly PhotoInput[]): void;
+  /** 次の写真へ切り替える。リスト末尾では先頭へ巡回する（BR-E-03）。写真が未設定なら何もしない（BR-E-04）。 */
+  next(): void;
+  /** 前の写真へ切り替える。リスト先頭では末尾へ巡回する（BR-E-03）。写真が未設定なら何もしない（BR-E-04）。 */
+  prev(): void;
+  /**
+   * 指定インデックスの写真へ切り替える。範囲外は `error`（`INVALID_INPUT`）を発火し変更しない
+   * （BR-E-05）。写真が未設定なら何もしない（BR-E-04）。
+   */
+  goTo(index: number): void;
+  /** 現在表示中の写真インデックスを返す。写真が一度も設定されていなければ `-1`。 */
+  getPhotoIndex(): number;
 
   /** ビューワーが保持するリソースを解放する。複数回呼び出しても安全（冪等）。 */
   dispose(): void;

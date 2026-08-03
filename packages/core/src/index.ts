@@ -4,6 +4,7 @@ export type {
   ModeChangeOptions,
   PerisphereError,
   PerisphereErrorCode,
+  PhotoChangeEvent,
   ViewChangeEvent,
   ViewerEventMap,
   ViewerEventType,
@@ -23,3 +24,4 @@ export type {
   SourceResult,
 } from "./loader/types.js";
 export type { InputIntent, InputSource, Keymap } from "./interaction/types.js";
+export type { PhotoInput } from "./gallery/types.js";
