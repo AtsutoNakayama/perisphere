@@ -61,5 +61,5 @@ UoW-A の Defense in Depth（SP-1: 環境ガード→WebGL2 チェックの多�
 
 ## 次のステップ（Step 6: 成果物生成、承認後）
 
-- `aidlc-docs/construction/uow-b/nfr-design/nfr-design-patterns.md`
-- `aidlc-docs/construction/uow-b/nfr-design/logical-components.md`
+- [x] `aidlc-docs/construction/uow-b/nfr-design/nfr-design-patterns.md`
+- [x] `aidlc-docs/construction/uow-b/nfr-design/logical-components.md`
