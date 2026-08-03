@@ -28,38 +28,44 @@
 
 ## Step 2: Business Logic Generation
 
-- [ ] 2-1. `packages/core/src/modes/projections/equidistant.ts`（新規）— `equidistantRadius(theta, fov): number`（BR-C-06 Dewarp の数式）
-- [ ] 2-2. `packages/core/src/modes/projections/stereographic.ts`（新規）— `stereographicRadius(theta, fov): number`（BR-C-06 Tiny Planet の数式）
-- [ ] 2-3. `packages/core/src/modes/projections/panini.ts`（新規）— `paniniProject(thetaH, dyOverHypot, fov, d?): { x: number; y: number }`（BR-C-06 Panini の近似数式）
-- [ ] 2-4. `packages/core/src/modes/ModeRegistry.ts`（新規）— `register`/`get`/`has`（E1、BR-C-01、Map ベース）
-- [ ] 2-5. `packages/core/src/viewer/ModeContext.ts`（既存修正）— `texture: Texture | null` を追加（E2、BR-C-08 の前提）
-- [ ] 2-6. `packages/core/src/viewer/Renderer.ts`（既存修正）— `setSphereMaterial(material: Material): void` を追加。`applySphereTexture`（UoW-B で切り出した純粋関数）をマテリアル種別で分岐するよう拡張（`MeshBasicMaterial.map` / `ShaderMaterial.uniforms.map.value`、NFR Requirements Q2）。`currentTexture` を内部保持し `modeContext.texture` で公開
-- [ ] 2-7. `packages/core/src/modes/UltraWideMode.ts` / `LinearMode.ts`（新規）— `StandardMode` と同じ実装パターン、既定値のみ変更（BR-C-05）
-- [ ] 2-8. `packages/core/src/modes/DewarpMode.ts` / `PaniniMode.ts` / `TinyPlanetMode.ts`（新規）— `ShaderMaterial` をコンストラクタで 1 回構築しキャッシュ（NFR Requirements Q3）。`apply`: `Renderer.setSphereMaterial` 経由で適用 + `ctx.texture` をユニフォームへ設定 + 既定ビューを `updateView` に委譲。`updateView`: カメラの `rotation` 設定 + `uFov` ユニフォーム更新（BR-C-06、数値的安定性のクランプ BR-C-10）。`dispose`: `Renderer.setSphereMaterial` で既定マテリアルへ復帰（`ShaderMaterial` 自体は破棄しない、BR-C-09）
-- [ ] 2-9. `packages/core/src/modes/CrystalBallMode.ts`（新規）— `apply`: カメラを外部へ移動 + `material.side = FrontSide`（BR-C-07）。`dispose`: `material.side = BackSide` へ復帰（BR-C-11）
-- [ ] 2-10. `packages/core/src/viewer/types.ts`（既存修正）— `ViewerModeId` を7モードの既知リテラル + `(string & {})` に拡張（BR-C-15）、`ModeChangeOptions`（空オブジェクト、将来のアニメ用予約）を追加、`ViewerHandle.setMode` にオプション引数追加（BR-C-14）、`ViewerHandle.registerMode`/`listModes` を追加（BR-C-12/13）
-- [ ] 2-11. `packages/core/src/viewer/createViewer.ts`（既存修正）— 初期化時に `ModeRegistry` へ全7モードを登録（BR-C-01）、`setMode` を `ModeRegistry` 解決 + 5手順（BR-C-02〜04）に置き換え、`registerMode`/`listModes` 実装、全モードの `ShaderMaterial` を `Viewer` dispose 時に解放する disposer 登録
-- [ ] 2-12. `packages/core/src/index.ts`（既存修正）— 新規公開型（`ViewerMode`/`ModeContext`/`ModeChangeOptions`）を re-export に追加。個別モードクラス自体は非公開（`registerMode` は `ViewerMode` IF を満たす任意のオブジェクトを受け付けるため、具体クラスの公開は不要）
+- [x] 2-1. `packages/core/src/modes/projections/equidistant.ts`（新規）— `equidistantRadius(theta, fov): number`（BR-C-06 Dewarp の数式）
+- [x] 2-2. `packages/core/src/modes/projections/stereographic.ts`（新規）— `stereographicRadius(theta, fov): number`（BR-C-06 Tiny Planet の数式）
+- [x] 2-3. `packages/core/src/modes/projections/panini.ts`（新規）— `paniniProject(thetaH, dyOverHypot, fov, d?): { x: number; y: number }`（BR-C-06 Panini の近似数式）
+- [x] 2-4. `packages/core/src/modes/ModeRegistry.ts`（新規）— `register`/`get`/`has`/`listIds`（E1、BR-C-01/13、Map ベース）
+- [x] 2-5. `packages/core/src/viewer/ModeContext.ts`（既存修正）— `texture: Texture | null` と `setSphereMaterial` 関数フィールドを追加（E2、BR-C-08、下記「計画からの逸脱」参照）
+- [x] 2-6. `packages/core/src/viewer/Renderer.ts`（既存修正）— `setSphereMaterial(material: Material | null): void` を追加。`applySphereTexture`（UoW-B で切り出した純粋関数）をマテリアル種別で分岐するよう拡張（`MeshBasicMaterial.map` / `ShaderMaterial.uniforms.map.value`、NFR Requirements Q2）。`currentTexture`/`defaultMaterial` を内部保持し `modeContext.texture` で公開。`disposeSceneResources` をモード所有マテリアルの誤破棄を避けるよう修正
+- [x] 2-7. `packages/core/src/modes/UltraWideMode.ts` / `LinearMode.ts`（新規）— `StandardMode` と同じ実装パターン、既定値のみ変更（BR-C-05）
+- [x] 2-8. `packages/core/src/modes/DewarpMode.ts` / `PaniniMode.ts` / `TinyPlanetMode.ts`（新規）— `ShaderMaterial` をコンストラクタで 1 回構築しキャッシュ（NFR Requirements Q3）。`apply`: `ctx.setSphereMaterial` 経由で適用（テクスチャは Renderer が自動反映、下記逸脱参照）+ 既定ビューを `updateView` に委譲。`updateView`: カメラの `rotation` 設定 + `uFov` ユニフォーム更新（BR-C-06、数値的安定性は GLSL 側の `clamp` で担保、BR-C-10）。`dispose`: 既定マテリアルへ復帰（BR-C-09）。`disposeResources`（新規 IF フック）: `ShaderMaterial.dispose()`
+- [x] 2-9. `packages/core/src/modes/CrystalBallMode.ts`（新規）— `apply`: カメラを外部へ移動 + `material.side = FrontSide`（BR-C-07）。`dispose`: `material.side = BackSide` へ復帰 + カメラ位置も原点へ復帰（下記「計画からの逸脱」参照、BR-C-11）
+- [x] 2-10. `packages/core/src/viewer/types.ts`（既存修正）— `ViewerModeId` を7モードの既知リテラル + `(string & {})` に拡張（BR-C-15）、`ModeChangeOptions`（空オブジェクト、将来のアニメ用予約）を追加、`ViewerHandle.setMode` にオプション引数追加（BR-C-14）、`ViewerHandle.registerMode`/`listModes` を追加（BR-C-12/13）
+- [x] 2-11. `packages/core/src/viewer/createViewer.ts`（既存修正）— 初期化時に `ModeRegistry` へ全7モードを登録順（FR-03 列挙順）で登録（BR-C-01）、`setMode` を `ModeRegistry` 解決 + 5手順（BR-C-02〜04）に置き換え（縮退ハンドルは従来通りの簡易実装を維持）、`registerMode`/`listModes` 実装、全登録モードの `disposeResources` を `Viewer` dispose 時に呼ぶ disposer 登録
+- [x] 2-12. `packages/core/src/index.ts`（既存修正）— 新規公開型（`ViewerMode`/`ModeContext`/`ModeChangeOptions`）を re-export に追加
+
+**計画からの逸脱（レビュー対象）**:
+1. `ModeContext` に `texture` だけでなく `setSphereMaterial`（`Renderer.setSphereMaterial` へのバインド済み関数）も追加した。計画時点の想定「モードが `Renderer.setSphereMaterial` を直接呼ぶ」は `ViewerMode` IF が `ModeContext` のみを受け取る既存契約（UoW-A）と矛盾するため、関数フィールド経由の疎結合に修正した。
+2. `Renderer.setSphereMaterial` はマテリアル差し替え時に現在のテクスチャを自動反映するよう設計した（`applySphereTexture` を内部で呼ぶ）。これによりシェーダベースモードの `apply()` は `ctx.setSphereMaterial(this.material)` を呼ぶだけでよく、当初想定していた「`ctx.texture` を手動でユニフォームへ設定する」処理が不要になった。
+3. `ViewerMode` IF に `disposeResources?(ctx): void`（オプション）を新設した。`dispose(ctx)`（モード切替のたびに呼ばれる）とは別に、Viewer 全体の dispose 時に一度だけ呼ばれるフックが必要と判明したため（`ShaderMaterial` の最終破棄用）。既存の `StandardMode` 等は未実装のままで後方互換。
+4. `CrystalBallMode.dispose()` はカメラ位置を原点へ復帰する処理を持たせた。`business-logic-model.md` P4 の初版記述（「次モードの apply が復帰を担う」）は、他モードが `camera.position` を一切操作しない前提と矛盾するため、実装時に「移動させた本モード自身が復帰する」方式へ修正した。
 
 ## Step 3: Business Logic Unit Testing
 
-- [ ] 3-1. `packages/core/src/modes/projections/__tests__/equidistant.test.ts` — fast-check（有効角度範囲での有限性・単調性・θ=0で半径0）
-- [ ] 3-2. `packages/core/src/modes/projections/__tests__/stereographic.test.ts` — 同上
-- [ ] 3-3. `packages/core/src/modes/projections/__tests__/panini.test.ts` — 同上（水平角の単調性・θ_h=0でx=0）
-- [ ] 3-4. `packages/core/src/modes/__tests__/ModeRegistry.test.ts` — register/get/has、同一 id の上書き
-- [ ] 3-5. `packages/core/src/modes/__tests__/CameraBasedModes.test.ts` — `UltraWideMode`/`LinearMode` の既定値・`updateView` の反映（`StandardMode.test.ts` と同パターン）
-- [ ] 3-6. `packages/core/src/modes/__tests__/ShaderModes.test.ts` — `DewarpMode`/`PaniniMode`/`TinyPlanetMode` 共通契約を `it.each` で検証: `apply` が `Renderer.setSphereMaterial`/`setSphereTexture` 相当を正しい引数で呼ぶこと、複数回の `apply` で同一 `ShaderMaterial` インスタンスが再利用されること（キャッシュ）、`dispose` 後に既定マテリアルへ戻ること
-- [ ] 3-7. `packages/core/src/modes/__tests__/CrystalBallMode.test.ts` — カメラ位置の変更、`material.side` の切替・復帰
-- [ ] 3-8. `packages/core/src/viewer/__tests__/Renderer.test.ts`（既存拡張）— `applySphereTexture` の `ShaderMaterial` 分岐（`uniforms.map.value` 更新）を追加検証
-- [ ] 3-9. `packages/core/src/viewer/__tests__/createViewer.setMode.test.ts`（新規、既存 `createViewer.test.ts`/`createViewer.loadImage.test.ts` は変更しない）— 全7モードへの切替、未登録 `id` での `INVALID_INPUT`（動的解決版）、`registerMode` で登録したカスタムモードへの切替、`listModes` の内容、`setMode` の `options` 引数を渡しても無視されること
+- [x] 3-1. `packages/core/src/modes/projections/__tests__/equidistant.test.ts` — fast-check（有効角度範囲での有限性・単調性・θ=0で半径0）
+- [x] 3-2. `packages/core/src/modes/projections/__tests__/stereographic.test.ts` — 同上
+- [x] 3-3. `packages/core/src/modes/projections/__tests__/panini.test.ts` — 同上（水平角の単調性・θ_h=0でx=0）
+- [x] 3-4. `packages/core/src/modes/__tests__/ModeRegistry.test.ts` — register/get/has/listIds、同一 id の上書き
+- [x] 3-5. `packages/core/src/modes/__tests__/CameraBasedModes.test.ts` — `UltraWideMode`/`LinearMode` の既定値・`updateView` の反映（`StandardMode.test.ts` と同パターン、`it.each` で共通化）。既存 `StandardMode.test.ts` の `ModeContext` ヘルパーも `texture`/`setSphereMaterial` 追加に合わせて修正（型エラー回避のため必須）
+- [x] 3-6. `packages/core/src/modes/__tests__/ShaderModes.test.ts` — `DewarpMode`/`PaniniMode`/`TinyPlanetMode` 共通契約を `it.each` で検証: `apply` が `ctx.setSphereMaterial` を `ShaderMaterial` で呼ぶこと、複数回の `apply` で同一インスタンスが再利用されること（キャッシュ）、`updateView` が `uFov` ユニフォームを更新すること、`dispose` が `setSphereMaterial(null)` を呼ぶこと、`disposeResources` が `ShaderMaterial.dispose()` を呼ぶこと
+- [x] 3-7. `packages/core/src/modes/__tests__/CrystalBallMode.test.ts` — カメラ位置の変更・復帰、`material.side` の切替・復帰
+- [x] 3-8. `packages/core/src/viewer/__tests__/Renderer.test.ts`（既存拡張）— `applySphereTexture` の `ShaderMaterial` 分岐（`uniforms.map.value` 更新、`map` ユニフォーム非搭載時に例外を投げないこと）を追加検証
+- [x] 3-9. `packages/core/src/viewer/__tests__/createViewer.setMode.test.ts`（新規、既存 `createViewer.test.ts`/`createViewer.loadImage.test.ts` は変更しない）— 全7モードへの切替、未登録 `id` での `INVALID_INPUT`、同一モードへの再切替が no-op であること、`options` 引数を渡しても無視されること、`registerMode`/`listModes`、縮退ハンドルでの簡易版動作
 
 ## Step 4: Business Logic Summary
 
-- [ ] 4-1. `aidlc-docs/construction/uow-c/code/code-summary.md`
+- [x] 4-1. `aidlc-docs/construction/uow-c/code/code-summary.md`
 
 ## Step 5: Documentation Generation
 
-- [ ] 5-1. 新規公開 API（`registerMode`, `listModes`, `setMode` のオプション引数, `ViewerMode`, `ModeContext`, `ModeChangeOptions`）に TSDoc コメントを付与する
+- [x] 5-1. 新規公開 API（`registerMode`, `listModes`, `setMode` のオプション引数, `ViewerMode`, `ModeContext`, `ModeChangeOptions`）に TSDoc コメントを付与する（Step 2 実装時点で付与済みであることを確認）
 
 ## Step 6: Deployment Artifacts Generation
 
@@ -67,11 +73,13 @@
 
 ## Step 7: ビルド・テストの実行確認
 
-- [ ] 7-1. `pnpm -r build` を実行し型エラー・ビルドエラーがないことを確認
-- [ ] 7-2. `pnpm -r test` を実行し全テスト（UoW-A/UoW-B の既存 66 件 + UoW-C 新規分）が green であることを確認
-- [ ] 7-3. `pnpm -r lint` を実行し lint エラーがないことを確認
-- [ ] 7-4. `pnpm audit --prod` で既知の脆弱性がないことを確認
-- [ ] 7-5. 問題が見つかった場合は該当コードを修正し、7-1〜7-4 を再実行する
+- [x] 7-1. `pnpm -r build` を実行し型エラー・ビルドエラーがないことを確認
+- [x] 7-2. `pnpm -r test` を実行し全テスト（UoW-A/UoW-B の既存 66 件 + UoW-C 新規分）が green であることを確認
+- [x] 7-3. `pnpm -r lint` を実行し lint エラーがないことを確認
+- [x] 7-4. `pnpm audit --prod` で既知の脆弱性がないことを確認
+- [x] 7-5. 問題が見つかった場合は該当コードを修正し、7-1〜7-4 を再実行する
+
+**実行結果**: build green（tsup ESM + `.d.ts` 生成成功）/ test green（17 ファイル・128 テスト全て pass、UoW-A/UoW-B の既存 66 件を含め回帰なし）/ lint green（ESLint・Prettier とも問題なし、初回で ESLint エラーなし・Prettier のみ自動整形）/ `pnpm audit --prod` 既知の脆弱性なし。build は初回で成功、テストも初回でほぼ全通過（`Renderer.test.ts` の `needsUpdate` アサーション同様の問題は発生せず）。
 
 **注記**: Step 7 は開発時点での自己検証であり、実際のブラウザでのシェーダ描画確認は含まない（`tech-stack-decisions.md` の制約により jsdom では検証不能）。正式な Build and Test ステージ（全ユニット共通の統合検証）を代替するものではない。
 

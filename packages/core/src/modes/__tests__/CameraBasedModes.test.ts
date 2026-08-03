@@ -1,8 +1,10 @@
 import { BoxGeometry, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene } from "three";
 import { describe, expect, it } from "vitest";
 
-import type { ModeContext } from "../ModeContext.js";
-import { StandardMode } from "../StandardMode.js";
+import { LinearMode } from "../LinearMode.js";
+import { UltraWideMode } from "../UltraWideMode.js";
+import type { ModeContext } from "../../viewer/ModeContext.js";
+import type { ViewerMode } from "../../viewer/ViewerMode.js";
 
 function createModeContext(): ModeContext {
   return {
@@ -14,28 +16,37 @@ function createModeContext(): ModeContext {
   };
 }
 
-describe("StandardMode", () => {
-  it("has id 'standard'", () => {
-    expect(new StandardMode().id).toBe("standard");
+describe.each([
+  {
+    name: "UltraWideMode",
+    Mode: UltraWideMode,
+    id: "ultraWide",
+    fov: 100,
+    zoom: { minFov: 60, maxFov: 120 },
+  },
+  { name: "LinearMode", Mode: LinearMode, id: "linear", fov: 50, zoom: { minFov: 20, maxFov: 70 } },
+])("$name (BR-C-05)", ({ Mode, id, fov, zoom }) => {
+  it(`has id '${id}'`, () => {
+    expect(new (Mode as new () => ViewerMode)().id).toBe(id);
   });
 
-  it("exposes the default zoom range 30..90 (BR-A-06)", () => {
-    expect(new StandardMode().defaultZoomLimits).toEqual({ minFov: 30, maxFov: 90 });
+  it("exposes the documented default zoom range", () => {
+    expect(new (Mode as new () => ViewerMode)().defaultZoomLimits).toEqual(zoom);
   });
 
-  it("apply() sets the default view yaw=0, pitch=0, fov=75 (BR-A-06)", () => {
-    const mode = new StandardMode();
+  it(`apply() sets the default fov=${fov}, yaw=0, pitch=0`, () => {
+    const mode = new (Mode as new () => ViewerMode)();
     const ctx = createModeContext();
 
     mode.apply(ctx);
 
-    expect(ctx.camera.fov).toBe(75);
+    expect(ctx.camera.fov).toBe(fov);
     expect(ctx.camera.rotation.x).toBeCloseTo(0);
     expect(ctx.camera.rotation.y).toBeCloseTo(0);
   });
 
   it("updateView() applies the given yaw/pitch/fov to the camera", () => {
-    const mode = new StandardMode();
+    const mode = new (Mode as new () => ViewerMode)();
     const ctx = createModeContext();
 
     mode.updateView(ctx, { yaw: 90, pitch: 45, fov: 60 });
@@ -46,7 +57,7 @@ describe("StandardMode", () => {
   });
 
   it("dispose() does not throw", () => {
-    const mode = new StandardMode();
+    const mode = new (Mode as new () => ViewerMode)();
     const ctx = createModeContext();
 
     expect(() => mode.dispose(ctx)).not.toThrow();

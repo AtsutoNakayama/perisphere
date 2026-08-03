@@ -1,7 +1,19 @@
 import type { ImageInput, ImageSourceAdapter } from "../loader/types.js";
+import type { ViewerMode } from "./ViewerMode.js";
 
-/** UoW-A で有効な唯一のビューワーモード識別子。他モードは UoW-C 以降で追加される。 */
-export type ViewerModeId = "standard";
+/**
+ * ビューワーモード識別子。同梱7モードの既知リテラルに加え、`registerMode`（BR-C-12）で
+ * 登録するカスタムモードの任意の `id` も許容する（`component-methods.md` の型定義通り、BR-C-15）。
+ */
+export type ViewerModeId =
+  | "standard"
+  | "ultraWide"
+  | "dewarp"
+  | "linear"
+  | "panini"
+  | "tinyPlanet"
+  | "crystalBall"
+  | (string & {});
 
 /** カメラの向き（度単位の yaw/pitch）とズーム量（fov、度単位）。 */
 export interface ViewState {
@@ -78,6 +90,14 @@ export interface ViewerOptions {
 }
 
 /**
+ * {@link ViewerHandle.setMode} に渡すオプション。将来のアニメーション遷移（US-11、Future）向けの
+ * 予約型で、UoW-C 時点ではフィールドを持たない（BR-C-14）。
+ */
+export interface ModeChangeOptions {
+  [key: string]: unknown;
+}
+
+/**
  * {@link createViewer} が返す公開ファサード。
  * UoW-A が実装するメンバーのみ。他ユニットの担当分（loadImage/setView/next 等）は該当ユニットで追加される。
  */
@@ -91,8 +111,16 @@ export interface ViewerHandle {
 
   /** 現在のビューワーモードを返す。 */
   getMode(): ViewerModeId;
-  /** ビューワーモードを切り替える。`'standard'` 以外を渡すと `error` イベント（`INVALID_INPUT`）が発火する。 */
-  setMode(mode: ViewerModeId): void;
+  /**
+   * ビューワーモードを切り替える。未登録の `id` を渡すと `error` イベント（`INVALID_INPUT`）が発火し、
+   * モードは変更されない（BR-C-02）。`options` は将来のアニメーション遷移（US-11、Future）向けの
+   * 予約引数で、UoW-C 時点では受け取っても無視する（BR-C-14）。
+   */
+  setMode(mode: ViewerModeId, options?: ModeChangeOptions): void;
+  /** 独自の投影モードを登録する（US-12）。同梱モードと同じ `ModeRegistry` の上に登録される（BR-C-12）。 */
+  registerMode(mode: ViewerMode): void;
+  /** 登録済みモードの `id` 一覧を返す（登録順、BR-C-13）。 */
+  listModes(): ViewerModeId[];
 
   /**
    * 画像を読み込み、標準ビューに反映する。

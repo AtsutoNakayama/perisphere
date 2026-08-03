@@ -1,13 +1,22 @@
 import { EquirectangularSource } from "../loader/EquirectangularSource.js";
 import { LoadError, Loader } from "../loader/Loader.js";
 import type { ImageInput, ImageSourceAdapter, SourceResult } from "../loader/types.js";
+import { CrystalBallMode } from "../modes/CrystalBallMode.js";
+import { DewarpMode } from "../modes/DewarpMode.js";
+import { LinearMode } from "../modes/LinearMode.js";
+import { ModeRegistry } from "../modes/ModeRegistry.js";
+import { PaniniMode } from "../modes/PaniniMode.js";
+import { TinyPlanetMode } from "../modes/TinyPlanetMode.js";
+import { UltraWideMode } from "../modes/UltraWideMode.js";
 import { DisposableRegistry } from "./DisposableRegistry.js";
 import { ErrorManager } from "./ErrorManager.js";
 import { EventBus } from "./EventBus.js";
 import { Renderer } from "./Renderer.js";
 import { StandardMode } from "./StandardMode.js";
 import { createViewerState } from "./ViewerState.js";
+import type { ViewerMode } from "./ViewerMode.js";
 import type {
+  ModeChangeOptions,
   ViewerEventMap,
   ViewerEventType,
   ViewerHandle,
@@ -71,6 +80,19 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
       disposables,
       errorManager,
       imageLoading: null,
+      modeSwitching: {
+        // BR-C-02 相当の最小限の挙動。縮退ハンドルには Renderer が存在せずモード適用先がないため、
+        // 'standard' のみ有効な no-op として扱い、他は INVALID_INPUT とする。
+        setMode: (mode) => {
+          if (mode !== "standard") {
+            errorManager.report("INVALID_INPUT", INVALID_MODE_MESSAGE);
+          }
+        },
+        registerMode: () => {
+          // 縮退ハンドルでは登録しても反映先がないため no-op。
+        },
+        listModes: () => ["standard"],
+      },
     });
 
     // BR-A-04: 呼び出し元が ViewerHandle を受け取った後の on('error', ...) が
@@ -86,23 +108,41 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
   const standardMode = new StandardMode();
 
   // BR-B-08/BR-B-16: 現在の画像ロードの中断制御・現在表示中のテクスチャの参照。
-  // Renderer のコンテキストロスト復帰コールバックからも参照するため、Renderer 構築前に宣言する。
+  // BR-C-03: 現在のモード。Renderer のコンテキストロスト復帰コールバックからも参照するため、
+  // Renderer 構築前に宣言する。
   let currentAbortController: AbortController | null = null;
   let currentSource: { adapter: ImageSourceAdapter; result: SourceResult } | null = null;
+  let currentMode: ViewerMode = standardMode;
 
   const renderer = new Renderer(container, {
     onContextLost: () => {
       errorManager.report("CONTEXT_LOST", CONTEXT_LOST_MESSAGE);
     },
     onRebuildSucceeded: () => {
-      // BR-A-12 復帰成功時、球体メッシュは再生成されプレースホルダに戻っているため、
-      // 表示中だった画像テクスチャ（あれば）を再適用する。
+      // BR-A-12 復帰成功時、球体メッシュは再生成されているため、表示中だった画像テクスチャ
+      // （あれば）を再適用する。現在のモードが Renderer.rebuild() 内で再適用済みだが、
+      // カメラベースモードはテクスチャに触れないため、ここで明示的に反映する（冪等）。
       renderer.setSphereTexture(currentSource?.result.texture ?? null);
     },
     onRebuildFailed: () => {
       // BR-A-12: 復帰失敗、再試行しない。フォールバック表示は Renderer 側の停止状態がそのまま維持される。
     },
   });
+
+  // BR-C-01: 全7モードを登録順（FR-03 の列挙順）で ModeRegistry へ登録する。
+  const modeRegistry = new ModeRegistry();
+  const builtinModes: ViewerMode[] = [
+    standardMode,
+    new UltraWideMode(),
+    new DewarpMode(),
+    new LinearMode(),
+    new PaniniMode(),
+    new TinyPlanetMode(),
+    new CrystalBallMode(),
+  ];
+  for (const mode of builtinModes) {
+    modeRegistry.register(mode);
+  }
 
   renderer.setActiveMode(standardMode);
   standardMode.apply(renderer.modeContext);
@@ -119,8 +159,13 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
       currentSource = null;
     }
   });
-  // BR-A-11: dispose の解体順序（登録順に解体）。
-  disposables.register(() => standardMode.dispose(renderer.modeContext));
+  // BR-A-11 拡張: 現在のモードの dispose → 全登録モードの disposeResources（BR-C-09）→ Renderer → EventBus。
+  disposables.register(() => currentMode.dispose(renderer.modeContext));
+  disposables.register(() => {
+    for (const id of modeRegistry.listIds()) {
+      modeRegistry.get(id)?.disposeResources?.(renderer.modeContext);
+    }
+  });
   disposables.register(() => renderer.dispose());
   disposables.register(() => eventBus.clear());
 
@@ -200,12 +245,45 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
     registeredAdapters.push(adapter);
   }
 
+  function setMode(mode: ViewerModeId, _options?: ModeChangeOptions): void {
+    // BR-C-14: options は将来のアニメーション遷移向けの予約引数で、UoW-C 時点では無視する。
+    const target = modeRegistry.get(mode);
+    if (!target) {
+      // BR-C-02: 未登録の id は INVALID_INPUT として通知し、モードは変更しない。
+      errorManager.report("INVALID_INPUT", INVALID_MODE_MESSAGE);
+      return;
+    }
+    if (target === currentMode) {
+      // 既に適用中のモードへの切替は実質的な変更なし（UoW-A StandardMode の既存挙動を踏襲）。
+      return;
+    }
+
+    // BR-C-03: dispose(旧) → apply(新) → 状態更新 → イベント発火。
+    currentMode.dispose(renderer.modeContext);
+    currentMode = target;
+    renderer.setActiveMode(target);
+    target.apply(renderer.modeContext);
+    state.mode = target.id;
+    eventBus.emit("modechange", { type: "modechange", mode: target.id });
+  }
+
+  function registerMode(mode: ViewerMode): void {
+    // BR-C-12: 同梱モードと同じ ModeRegistry の上に登録される。
+    modeRegistry.register(mode);
+  }
+
+  function listModes(): ViewerModeId[] {
+    // BR-C-13
+    return modeRegistry.listIds();
+  }
+
   const handle = buildHandle({
     eventBus,
     state,
     disposables,
     errorManager,
     imageLoading: { loadImage, registerSource },
+    modeSwitching: { setMode, registerMode, listModes },
   });
 
   // BR-A-04: ready イベントもマイクロタスクまで発火を遅延する（同じ運用上の理由）。
@@ -222,6 +300,12 @@ interface ImageLoadingCapability {
   registerSource: (adapter: ImageSourceAdapter) => void;
 }
 
+interface ModeSwitchingCapability {
+  setMode: (mode: ViewerModeId, options?: ModeChangeOptions) => void;
+  registerMode: (mode: ViewerMode) => void;
+  listModes: () => ViewerModeId[];
+}
+
 interface HandleDeps {
   eventBus: EventBus;
   state: ReturnType<typeof createViewerState>;
@@ -229,6 +313,7 @@ interface HandleDeps {
   errorManager: ErrorManager;
   /** 縮退ハンドル（WebGL2 非対応）の場合は null（BR-B-13）。 */
   imageLoading: ImageLoadingCapability | null;
+  modeSwitching: ModeSwitchingCapability;
 }
 
 function buildHandle({
@@ -237,6 +322,7 @@ function buildHandle({
   disposables,
   errorManager,
   imageLoading,
+  modeSwitching,
 }: HandleDeps): ViewerHandle {
   const guardDisposed = (): boolean => {
     if (disposables.isDisposed) {
@@ -263,14 +349,17 @@ function buildHandle({
       guardDisposed();
       return state.mode;
     },
-    setMode(mode: ViewerModeId): void {
+    setMode(mode: ViewerModeId, options?: ModeChangeOptions): void {
       if (!guardDisposed()) return;
-      if (mode !== "standard") {
-        // BR-A-17: 非標準値は INVALID_INPUT として通知し、モードは変更しない。
-        errorManager.report("INVALID_INPUT", INVALID_MODE_MESSAGE);
-        return;
-      }
-      // 既に標準のため実質的な変更なし（UoW-A では no-op）。
+      modeSwitching.setMode(mode, options);
+    },
+    registerMode(mode: ViewerMode): void {
+      if (!guardDisposed()) return;
+      modeSwitching.registerMode(mode);
+    },
+    listModes(): ViewerModeId[] {
+      guardDisposed();
+      return modeSwitching.listModes();
     },
     async loadImage(input: ImageInput): Promise<void> {
       if (!guardDisposed()) return;
