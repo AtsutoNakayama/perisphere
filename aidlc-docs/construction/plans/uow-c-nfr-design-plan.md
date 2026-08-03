@@ -54,5 +54,5 @@
 
 ## 次のステップ（Step 6: 成果物生成、承認後）
 
-- `aidlc-docs/construction/uow-c/nfr-design/nfr-design-patterns.md`
-- `aidlc-docs/construction/uow-c/nfr-design/logical-components.md`
+- [x] `aidlc-docs/construction/uow-c/nfr-design/nfr-design-patterns.md`
+- [x] `aidlc-docs/construction/uow-c/nfr-design/logical-components.md`
