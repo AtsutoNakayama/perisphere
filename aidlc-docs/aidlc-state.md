@@ -60,7 +60,7 @@
 #### UoW-B 画像入力・ロード（[#34](https://github.com/AtsutoNakayama/perisphere/issues/34) / ブランチ `feat/34-uow-b-loading`）
 
 - [x] Functional Design（Q1〜Q8 回答確定〔全て推奨案採用〕。成果物 `construction/uow-b/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。UoW-A 既存実装への拡張点（ViewerEventMap.progress・ViewerState.imageLoadState・ViewerHandle.loadImage/registerSource・Renderer.setSphereTexture）を明記。**ユーザー承認: 2026-08-03**）
-- [ ] NFR Requirements
+- [x] NFR Requirements（成果物 `construction/uow-b/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。UoW-A のモノレポ横断決定を継承し、UoW-B固有: Loaderをテスト境界化・fetchのvi.fn直接モック・PBT対象拡大（アスペクト比境界値/多重呼び出しキャンセル）・新規ランタイム依存なし。**ユーザー承認: 2026-08-03**）
 - [ ] NFR Design
 - [ ] Infrastructure Design
 - [ ] Code Generation
