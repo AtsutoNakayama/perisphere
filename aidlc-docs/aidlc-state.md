@@ -88,7 +88,18 @@
 - [x] Code Generation（成果物 `construction/plans/uow-d-code-generation-plan.md`（Step 2〜5,7 全完了）、`packages/core/src/interaction/` 新規一式、`viewer/`・`modes/` への拡張、`construction/uow-d/code/code-summary.md`。テスト24ファイル214件（UoW-A/C既存128件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green。計画からの逸脱3件（pitchクランプ[-89,89]→[-90,90]訂正、`ViewerState.ts`のUoW-B由来の`imageLoadState`初期化漏れを発見・修正、`Renderer.test.ts`へのonFrame単体テスト追加を見送りcreateViewer.interaction.test.tsへ統合）を code-summary.md に記載。**ユーザー承認: 2026-08-03**）
 - [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
 
-**UoW-D Per-Unit Loop 完了（2026-08-03）。マウス/タッチ/キーボードでの視点操作（pan/tilt/zoom）とキーマップ・ズーム上下限の設定が完成。**
+**UoW-D Per-Unit Loop 完了（2026-08-03）。マウス/タッチ/キーボードでの視点操作（pan/tilt/zoom）とキーマップ・ズーム上下限の設定が完成。PR #39 マージ・Issue #38 クローズ済み。main 同期済み。**
+
+#### UoW-E ギャラリー（[#40](https://github.com/AtsutoNakayama/perisphere/issues/40) / ブランチ `feat/40-uow-e-gallery`）
+
+- [x] Functional Design（Q1〜Q8 回答確定〔全て推奨案採用〕。成果物 `construction/uow-e/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。`PhotoInput`型を新規定義（`ImageInput | { src; id? }`）、`GalleryMoveResult`判別型で写真未設定時の無視（Q3）とgoTo範囲外エラー（Q4）を区別、UoW-D `BR-D-16`（photoNext/photoPrev意図的no-op）を本ユニットで解消する設計を確定。**ユーザー承認: 2026-08-03**）
+- [x] NFR Requirements（Q1〜Q4 回答確定〔全て推奨案採用〕。成果物 `construction/uow-e/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。プリロードなし・オンデマンドロード方針、Gallery独立テスト境界、NFR-09が名指しした「ギャラリー」状態管理のPBT対象化を確定。**ユーザー承認: 2026-08-03**）
+- [x] NFR Design（Q1〜Q3 回答確定〔全て推奨案採用〕。成果物 `construction/uow-e/nfr-design/`: nfr-design-patterns.md（RP-E-1 Pending-vs-Confirmed Pointer Separation〔本ステージでの発見〕/ RP-E-2 / SP-E-1、Rejected Patterns）/ logical-components.md（L1〜L4）。Q1 承認に伴い Functional Design 成果物（domain-entities.md/business-rules.md/business-logic-model.md）へ `Gallery.current`（目標ポインタ）と `ViewerState.photoIndex`（表示中ポインタ）の分離を遡及反映。**ユーザー承認: 2026-08-03**）
+- [x] Infrastructure Design（Q1=A で確定。成果物 `construction/uow-e/infrastructure-design/`: infrastructure-design.md / deployment-architecture.md。インフラ変更なし（既存 `pnpm -r` CI ジョブでカバー）。**ユーザー承認: 2026-08-03**）
+- [x] Code Generation（成果物 `construction/plans/uow-e-code-generation-plan.md`（Step 2〜5,7 全完了）、`packages/core/src/gallery/` 新規一式、`viewer/`・`index.ts` への拡張、`construction/uow-e/code/code-summary.md`。テスト26ファイル241件（UoW-A/B/C/D既存214件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green。計画からの逸脱1件（`photoNext`/`photoPrev`実切替検証テストの配置先を`createViewer.interaction.test.ts`〔Loader未モック〕から`createViewer.gallery.test.ts`〔Loaderモック済み〕へ変更）を code-summary.md に記載。**ユーザー承認: 2026-08-03**）
+- [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
+
+**UoW-E Per-Unit Loop 完了（2026-08-03）。複数写真の next/prev/index切替とギャラリーAPI（setPhotos/next/prev/goTo/getPhotoIndex/photochange）が完成。UoW-D で先行実装済みだった photoNext/photoPrev キー操作もここで実際の写真切替に結線された。**
 
 ## Notes
 
