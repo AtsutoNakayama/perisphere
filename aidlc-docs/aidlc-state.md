@@ -73,7 +73,7 @@
 - [x] Functional Design（Q1〜Q6 回答確定〔全て推奨案採用〕。成果物 `construction/uow-c/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。実装方式をハイブリッド確定（カメラベース: UltraWide/Linear、シェーダベース: Dewarp/Panini/TinyPlanet、外部カメラ: CrystalBall）。UoW-A `Renderer`/`ModeContext` への拡張点（`setSphereMaterial`・`texture` フィールド）を明記。**ユーザー承認: 2026-08-03**）
 - [x] NFR Requirements（成果物 `construction/uow-c/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。UoW-Bとの統合欠陥を発見・対応方針確定（Renderer.setSphereTextureのマテリアル非依存化）。ShaderMaterialのモードごとキャッシュ、投影数式のTS純粋関数切り出し+PBT。**ユーザー承認: 2026-08-03**）
 - [x] NFR Design（成果物 `construction/uow-c/nfr-design/`: nfr-design-patterns.md / logical-components.md。Resilience: シェーダ欠陥への実行時フォールバック不採用、Performance: ジオメトリ共用+ShaderMaterialキャッシュ、L1〜L5論理コンポーネント確定。**ユーザー承認: 2026-08-03**）
-- [ ] Infrastructure Design
+- [x] Infrastructure Design（成果物 `construction/uow-c/infrastructure-design/`: infrastructure-design.md / deployment-architecture.md。インフラ変更なし。**ユーザー承認: 2026-08-03**）
 - [ ] Code Generation
 - [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
 
