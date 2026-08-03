@@ -1,3 +1,10 @@
+import { InputManager } from "../interaction/InputManager.js";
+import { KeyboardInputSource } from "../interaction/KeyboardInputSource.js";
+import { PointerInputSource } from "../interaction/PointerInputSource.js";
+import { TouchInputSource } from "../interaction/TouchInputSource.js";
+import type { InputIntent, InputSource, Keymap } from "../interaction/types.js";
+import { ViewController } from "../interaction/ViewController.js";
+import { FALLBACK_DEFAULT_VIEW } from "../interaction/viewMath.js";
 import { EquirectangularSource } from "../loader/EquirectangularSource.js";
 import { LoadError, Loader } from "../loader/Loader.js";
 import type { ImageInput, ImageSourceAdapter, SourceResult } from "../loader/types.js";
@@ -22,6 +29,8 @@ import type {
   ViewerHandle,
   ViewerModeId,
   ViewerOptions,
+  ViewState,
+  ZoomLimits,
 } from "./types.js";
 
 const WEBGL_UNSUPPORTED_MESSAGE =
@@ -32,6 +41,9 @@ const DISPOSED_WARNING = "[perisphere] ViewerHandle method called after dispose(
 const LOAD_IMAGE_UNSUPPORTED_MESSAGE =
   "loadImage() is not available because WebGL2 rendering is not supported in this environment.";
 const LOAD_IMAGE_UNKNOWN_ERROR_MESSAGE = "Failed to load the image.";
+const INVALID_VIEW_MESSAGE = "The provided view contains a non-finite value.";
+const INVALID_ZOOM_LIMITS_MESSAGE =
+  "The provided zoom limits are invalid (non-finite, or minFov is not less than maxFov).";
 
 function isBrowserEnvironment(): boolean {
   // BR-A-01: SSR セーフな環境ガード。
@@ -93,6 +105,14 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
         },
         listModes: () => ["standard"],
       },
+      interaction: {
+        // 縮退ハンドルには Renderer/ModeContext が存在せず反映先がないため、全て安全な no-op とする。
+        getView: () => ({ ...FALLBACK_DEFAULT_VIEW }),
+        setView: () => {},
+        setZoomLimits: () => {},
+        registerInputSource: () => {},
+        setKeymap: () => {},
+      },
     });
 
     // BR-A-04: 呼び出し元が ViewerHandle を受け取った後の on('error', ...) が
@@ -113,6 +133,8 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
   let currentAbortController: AbortController | null = null;
   let currentSource: { adapter: ImageSourceAdapter; result: SourceResult } | null = null;
   let currentMode: ViewerMode = standardMode;
+  // BR-D-13: コンテキストロスト復帰コールバックからも参照するため、Renderer 構築前に宣言する。
+  const viewController = new ViewController();
 
   const renderer = new Renderer(container, {
     onContextLost: () => {
@@ -123,9 +145,21 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
       // （あれば）を再適用する。現在のモードが Renderer.rebuild() 内で再適用済みだが、
       // カメラベースモードはテクスチャに触れないため、ここで明示的に反映する（冪等）。
       renderer.setSphereTexture(currentSource?.result.texture ?? null);
+      // BR-D-13: rebuild() は activeMode.apply() を呼びモード既定ビューへ戻すため、
+      // コンテキストロスト直前まで利用者が操作していた視点を再適用する。
+      currentMode.updateView(renderer.modeContext, viewController.getView());
     },
     onRebuildFailed: () => {
       // BR-A-12: 復帰失敗、再試行しない。フォールバック表示は Renderer 側の停止状態がそのまま維持される。
+    },
+    onFrame: () => {
+      // PP-D-1 Coalesced View Change Emission: 毎フレーム、発火保留があれば集約して発火する。
+      const flushed = viewController.flushIfPending();
+      if (!flushed) return;
+      eventBus.emit("viewchange", { type: "viewchange", ...flushed.view });
+      if (flushed.fovChanged) {
+        eventBus.emit("zoomchange", { type: "zoomchange", fov: flushed.view.fov });
+      }
     },
   });
 
@@ -146,6 +180,51 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
 
   renderer.setActiveMode(standardMode);
   standardMode.apply(renderer.modeContext);
+  // BR-D-12 相当の初期同期: 起動時に実際に適用された既定ビュー/ズーム範囲へ ViewController を同期する。
+  viewController.resetToModeDefault(
+    standardMode.defaultView ?? FALLBACK_DEFAULT_VIEW,
+    standardMode.defaultZoomLimits,
+  );
+
+  function reflectView(): void {
+    currentMode.updateView(renderer.modeContext, viewController.getView());
+  }
+
+  function handleInputIntent(intent: InputIntent): void {
+    switch (intent.kind) {
+      case "pan":
+        viewController.applyPan(intent.deltaPx);
+        reflectView();
+        break;
+      case "tilt":
+        viewController.applyTilt(intent.deltaPx);
+        reflectView();
+        break;
+      case "zoom":
+        if (intent.mode === "delta") {
+          viewController.applyZoomDelta(intent.value);
+        } else {
+          viewController.applyZoomScale(intent.value);
+        }
+        reflectView();
+        break;
+      case "setMode":
+        setMode(intent.mode);
+        break;
+      case "photoNext":
+      case "photoPrev":
+      case "toggleFullscreen":
+        // BR-D-16: UoW-E（ギャラリー）/UoW-F（フルスクリーン）が未実装のため安全に無視する。
+        break;
+    }
+  }
+
+  // BR-D-01: 組み込み入力源をコンテナへアタッチする。共有の intent ハンドラを渡す。
+  const inputManager = new InputManager(container, handleInputIntent);
+  const keyboardInputSource = new KeyboardInputSource();
+  inputManager.register(new PointerInputSource());
+  inputManager.register(new TouchInputSource());
+  inputManager.register(keyboardInputSource);
 
   const loader = new Loader();
   const defaultAdapter: ImageSourceAdapter = new EquirectangularSource();
@@ -166,6 +245,8 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
       modeRegistry.get(id)?.disposeResources?.(renderer.modeContext);
     }
   });
+  // BR-D-03: 組み込み・登録済みを問わず全 InputSource を破棄時にデタッチする。
+  disposables.register(() => inputManager.detachAll());
   disposables.register(() => renderer.dispose());
   disposables.register(() => eventBus.clear());
 
@@ -263,6 +344,12 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
     currentMode = target;
     renderer.setActiveMode(target);
     target.apply(renderer.modeContext);
+    // BR-D-12: ViewController を実際に適用された既定ビューへ同期し、明示ズーム上下限があれば再クランプする。
+    viewController.resetToModeDefault(
+      target.defaultView ?? FALLBACK_DEFAULT_VIEW,
+      target.defaultZoomLimits,
+    );
+    reflectView();
     state.mode = target.id;
     eventBus.emit("modechange", { type: "modechange", mode: target.id });
   }
@@ -277,6 +364,35 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
     return modeRegistry.listIds();
   }
 
+  function getView(): ViewState {
+    return viewController.getView();
+  }
+
+  function setView(partial: Partial<ViewState>): void {
+    // BR-D-11: 不正値（非有限数値）は反映せず INVALID_INPUT を発火する（NFR Requirements Q5）。
+    viewController.setView(partial, () => {
+      errorManager.report("INVALID_INPUT", INVALID_VIEW_MESSAGE);
+    });
+    reflectView();
+  }
+
+  function setZoomLimits(limits: Partial<ZoomLimits>): void {
+    // BR-D-10: 不正値（非有限数値、minFov >= maxFov）は反映せず INVALID_INPUT を発火する。
+    viewController.setZoomLimits(limits, () => {
+      errorManager.report("INVALID_INPUT", INVALID_ZOOM_LIMITS_MESSAGE);
+    });
+    reflectView();
+  }
+
+  function registerInputSource(source: InputSource): void {
+    // BR-D-02
+    inputManager.register(source);
+  }
+
+  function setKeymap(map: Partial<Keymap> | null): void {
+    keyboardInputSource.setKeymap(map);
+  }
+
   const handle = buildHandle({
     eventBus,
     state,
@@ -284,6 +400,7 @@ export function createViewer(container: HTMLElement, _options?: ViewerOptions): 
     errorManager,
     imageLoading: { loadImage, registerSource },
     modeSwitching: { setMode, registerMode, listModes },
+    interaction: { getView, setView, setZoomLimits, registerInputSource, setKeymap },
   });
 
   // BR-A-04: ready イベントもマイクロタスクまで発火を遅延する（同じ運用上の理由）。
@@ -306,6 +423,14 @@ interface ModeSwitchingCapability {
   listModes: () => ViewerModeId[];
 }
 
+interface InteractionCapability {
+  getView: () => ViewState;
+  setView: (partial: Partial<ViewState>) => void;
+  setZoomLimits: (limits: Partial<ZoomLimits>) => void;
+  registerInputSource: (source: InputSource) => void;
+  setKeymap: (map: Partial<Keymap> | null) => void;
+}
+
 interface HandleDeps {
   eventBus: EventBus;
   state: ReturnType<typeof createViewerState>;
@@ -314,6 +439,8 @@ interface HandleDeps {
   /** 縮退ハンドル（WebGL2 非対応）の場合は null（BR-B-13）。 */
   imageLoading: ImageLoadingCapability | null;
   modeSwitching: ModeSwitchingCapability;
+  /** 縮退ハンドルでも安全な no-op 実装を持つため null にはしない（BR-D-16 と同じ思想）。 */
+  interaction: InteractionCapability;
 }
 
 function buildHandle({
@@ -323,6 +450,7 @@ function buildHandle({
   errorManager,
   imageLoading,
   modeSwitching,
+  interaction,
 }: HandleDeps): ViewerHandle {
   const guardDisposed = (): boolean => {
     if (disposables.isDisposed) {
@@ -372,6 +500,26 @@ function buildHandle({
     registerSource(adapter: ImageSourceAdapter): void {
       if (!guardDisposed()) return;
       imageLoading?.registerSource(adapter);
+    },
+    getView(): ViewState {
+      guardDisposed();
+      return interaction.getView();
+    },
+    setView(view: Partial<ViewState>): void {
+      if (!guardDisposed()) return;
+      interaction.setView(view);
+    },
+    setZoomLimits(limits: Partial<ZoomLimits>): void {
+      if (!guardDisposed()) return;
+      interaction.setZoomLimits(limits);
+    },
+    registerInputSource(source: InputSource): void {
+      if (!guardDisposed()) return;
+      interaction.registerInputSource(source);
+    },
+    setKeymap(map: Partial<Keymap> | null): void {
+      if (!guardDisposed()) return;
+      interaction.setKeymap(map);
     },
     dispose(): void {
       // BR-A-10: 冪等。2回目以降は no-op（警告なし。BR-A-09 は「他のメソッド」向け）。

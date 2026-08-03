@@ -40,6 +40,7 @@ const FRAGMENT_SHADER = /* glsl */ `
 export class DewarpMode implements ViewerMode {
   readonly id = "dewarp";
   readonly defaultZoomLimits: ZoomLimits = DEFAULT_ZOOM_LIMITS;
+  readonly defaultView: ViewState = DEFAULT_VIEW;
 
   private readonly material = new ShaderMaterial({
     uniforms: { map: { value: null }, uFov: { value: MathUtils.degToRad(DEFAULT_VIEW.fov) } },

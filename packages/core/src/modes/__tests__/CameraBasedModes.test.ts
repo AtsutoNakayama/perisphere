@@ -34,6 +34,10 @@ describe.each([
     expect(new (Mode as new () => ViewerMode)().defaultZoomLimits).toEqual(zoom);
   });
 
+  it(`exposes defaultView matching fov=${fov}, yaw=0, pitch=0 (UoW-D, domain-entities.md E10)`, () => {
+    expect(new (Mode as new () => ViewerMode)().defaultView).toEqual({ yaw: 0, pitch: 0, fov });
+  });
+
   it(`apply() sets the default fov=${fov}, yaw=0, pitch=0`, () => {
     const mode = new (Mode as new () => ViewerMode)();
     const ctx = createModeContext();

@@ -14,6 +14,7 @@ const DEFAULT_ZOOM_LIMITS: ZoomLimits = { minFov: 60, maxFov: 120 };
 export class UltraWideMode implements ViewerMode {
   readonly id = "ultraWide";
   readonly defaultZoomLimits: ZoomLimits = DEFAULT_ZOOM_LIMITS;
+  readonly defaultView: ViewState = DEFAULT_VIEW;
 
   apply(ctx: ModeContext): void {
     this.updateView(ctx, DEFAULT_VIEW);

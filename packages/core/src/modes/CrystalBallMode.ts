@@ -15,6 +15,7 @@ const EXTERNAL_DISTANCE_FACTOR = 2.5;
 export class CrystalBallMode implements ViewerMode {
   readonly id = "crystalBall";
   readonly defaultZoomLimits: ZoomLimits = DEFAULT_ZOOM_LIMITS;
+  readonly defaultView: ViewState = DEFAULT_VIEW;
 
   apply(ctx: ModeContext): void {
     const radius = (ctx.sphereMesh.geometry as SphereGeometry).parameters.radius;

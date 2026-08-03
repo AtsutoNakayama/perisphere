@@ -23,6 +23,10 @@ describe("StandardMode", () => {
     expect(new StandardMode().defaultZoomLimits).toEqual({ minFov: 30, maxFov: 90 });
   });
 
+  it("exposes defaultView matching the view applied by apply() (UoW-D, domain-entities.md E10)", () => {
+    expect(new StandardMode().defaultView).toEqual({ yaw: 0, pitch: 0, fov: 75 });
+  });
+
   it("apply() sets the default view yaw=0, pitch=0, fov=75 (BR-A-06)", () => {
     const mode = new StandardMode();
     const ctx = createModeContext();

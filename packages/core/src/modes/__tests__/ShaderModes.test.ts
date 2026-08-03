@@ -31,6 +31,7 @@ describe.each([
     id: "dewarp",
     fov: 140,
     zoom: { minFov: 90, maxFov: 160 },
+    view: { yaw: 0, pitch: 0, fov: 140 },
   },
   {
     name: "PaniniMode",
@@ -38,6 +39,7 @@ describe.each([
     id: "panini",
     fov: 120,
     zoom: { minFov: 80, maxFov: 150 },
+    view: { yaw: 0, pitch: 0, fov: 120 },
   },
   {
     name: "TinyPlanetMode",
@@ -45,14 +47,19 @@ describe.each([
     id: "tinyPlanet",
     fov: 160,
     zoom: { minFov: 100, maxFov: 180 },
+    view: { yaw: 0, pitch: -90, fov: 160 },
   },
-])("$name (BR-C-06/08/09)", ({ Mode, id, fov, zoom }) => {
+])("$name (BR-C-06/08/09)", ({ Mode, id, fov, zoom, view }) => {
   type ModeCtor = new () => ViewerMode & { disposeResources?: () => void };
 
   it(`has id '${id}' and the documented default zoom range`, () => {
     const mode = new (Mode as ModeCtor)();
     expect(mode.id).toBe(id);
     expect(mode.defaultZoomLimits).toEqual(zoom);
+  });
+
+  it("exposes defaultView matching the view applied by apply() (UoW-D, domain-entities.md E10)", () => {
+    expect(new (Mode as ModeCtor)().defaultView).toEqual(view);
   });
 
   it(`apply() installs a ShaderMaterial via ctx.setSphereMaterial and sets fov=${fov} as the uFov uniform`, () => {

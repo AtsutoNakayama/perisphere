@@ -1,4 +1,5 @@
 import type { ImageInput, ImageSourceAdapter } from "../loader/types.js";
+import type { InputSource, Keymap } from "../interaction/types.js";
 import type { ViewerMode } from "./ViewerMode.js";
 
 /**
@@ -51,6 +52,8 @@ export interface ViewerState {
   loadState: "idle" | "loading" | "ready" | "error";
   lastError: PerisphereError | null;
   imageLoadState: ImageLoadState;
+  /** 現在の視点（yaw/pitch/fov）。UoW-D で追加（`domain-entities.md` E9）。 */
+  view: ViewState;
 }
 
 export interface ReadyEvent {
@@ -74,12 +77,25 @@ export interface ImageProgressEvent {
   total?: number;
 }
 
+/** 視点（yaw/pitch/fov）変更通知（BR-D-14）。発火回数・頻度は保証しない（PP-D-1 で集約発火）。 */
+export interface ViewChangeEvent extends ViewState {
+  type: "viewchange";
+}
+
+/** ズーム（fov）変更通知（BR-D-14）。`viewchange` のうち fov が変化した場合に併せて発火する。 */
+export interface ZoomChangeEvent {
+  type: "zoomchange";
+  fov: number;
+}
+
 /** {@link ViewerHandle.on} などで購読できるイベントの型マップ。 */
 export interface ViewerEventMap {
   ready: ReadyEvent;
   error: ErrorEvent;
   modechange: ModeChangeEvent;
   progress: ImageProgressEvent;
+  viewchange: ViewChangeEvent;
+  zoomchange: ZoomChangeEvent;
 }
 
 export type ViewerEventType = keyof ViewerEventMap;
@@ -130,6 +146,24 @@ export interface ViewerHandle {
   loadImage(input: ImageInput): Promise<void>;
   /** 独自の画像ソースアダプタを登録する（US-04）。既定の `EquirectangularSource` より優先される。 */
   registerSource(adapter: ImageSourceAdapter): void;
+
+  /** 現在の視点（yaw/pitch/fov）を返す（US-20）。 */
+  getView(): ViewState;
+  /**
+   * 視点を明示的に設定する（US-20）。ドラッグ等と同じクランプ（pitch/fov）・yaw 正規化を適用する。
+   * 非有限数値（`NaN`/`Infinity`）を含む場合は反映せず `error` イベント（`INVALID_INPUT`）を発火する（BR-D-11）。
+   */
+  setView(view: Partial<ViewState>): void;
+  /**
+   * ズームの上下限を設定する（US-20）。現在の実効範囲に `limits` をマージし、以後モード切替をまたいで
+   * 維持される明示設定として扱う（BR-D-10）。`minFov >= maxFov` 等の不正な組み合わせは `error`
+   * イベント（`INVALID_INPUT`）を発火し反映しない。
+   */
+  setZoomLimits(limits: Partial<ZoomLimits>): void;
+  /** 独自の入力源を登録する（NFR-02）。組み込みのポインタ/タッチ/キーボード入力源と対等に扱われる。 */
+  registerInputSource(source: InputSource): void;
+  /** キーマップを変更する（US-19）。`null` はキーボード操作全体を無効化する。 */
+  setKeymap(map: Partial<Keymap> | null): void;
 
   /** ビューワーが保持するリソースを解放する。複数回呼び出しても安全（冪等）。 */
   dispose(): void;

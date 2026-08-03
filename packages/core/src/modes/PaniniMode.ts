@@ -51,6 +51,7 @@ const FRAGMENT_SHADER = /* glsl */ `
 export class PaniniMode implements ViewerMode {
   readonly id = "panini";
   readonly defaultZoomLimits: ZoomLimits = DEFAULT_ZOOM_LIMITS;
+  readonly defaultView: ViewState = DEFAULT_VIEW;
 
   private readonly material = new ShaderMaterial({
     uniforms: { map: { value: null }, uFov: { value: MathUtils.degToRad(DEFAULT_VIEW.fov) } },
