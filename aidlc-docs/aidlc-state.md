@@ -68,6 +68,15 @@
 
 **UoW-B Per-Unit Loop 完了（2026-08-03）。「1枚の画像を標準ビューで表示」という最初の縦切り到達点（UoW-A+UoW-B）が完成。**
 
+#### UoW-C 投影モード（[#36](https://github.com/AtsutoNakayama/perisphere/issues/36) / ブランチ `feat/36-uow-c-modes`）
+
+- [x] Functional Design（Q1〜Q6 回答確定〔全て推奨案採用〕。成果物 `construction/uow-c/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。実装方式をハイブリッド確定（カメラベース: UltraWide/Linear、シェーダベース: Dewarp/Panini/TinyPlanet、外部カメラ: CrystalBall）。UoW-A `Renderer`/`ModeContext` への拡張点（`setSphereMaterial`・`texture` フィールド）を明記。**ユーザー承認: 2026-08-03**）
+- [ ] NFR Requirements
+- [ ] NFR Design
+- [ ] Infrastructure Design
+- [ ] Code Generation
+- [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
+
 ## Notes
 
 - 監査ログ `aidlc-docs/audit.md` はリポジトリ方針によりローカル限定（`.gitignore` 済み）。
