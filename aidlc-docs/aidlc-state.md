@@ -59,7 +59,7 @@
 
 #### UoW-B 画像入力・ロード（[#34](https://github.com/AtsutoNakayama/perisphere/issues/34) / ブランチ `feat/34-uow-b-loading`）
 
-- [ ] Functional Design（Q1〜Q8 回答確定〔全て推奨案採用〕。成果物 `construction/uow-b/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md 生成済み。UoW-A 既存実装への拡張点（ViewerEventMap.progress・ViewerState.imageLoadState・ViewerHandle.loadImage/registerSource・Renderer.setSphereTexture）を明記。**レビュー待ち**）
+- [x] Functional Design（Q1〜Q8 回答確定〔全て推奨案採用〕。成果物 `construction/uow-b/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md。UoW-A 既存実装への拡張点（ViewerEventMap.progress・ViewerState.imageLoadState・ViewerHandle.loadImage/registerSource・Renderer.setSphereTexture）を明記。**ユーザー承認: 2026-08-03**）
 - [ ] NFR Requirements
 - [ ] NFR Design
 - [ ] Infrastructure Design
