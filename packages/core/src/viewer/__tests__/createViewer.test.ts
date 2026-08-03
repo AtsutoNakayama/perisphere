@@ -100,11 +100,14 @@ describe("createViewer", () => {
     expect(instances).toHaveLength(0);
   });
 
-  it("never touches the container DOM in the degraded path (NFR Design Q6=A)", async () => {
+  it("never touches the container DOM itself in the degraded path when headless (NFR Design Q6=A)", async () => {
+    // UoW-A（Renderer/WebGL 層）自体は縮退時も container に何も描画しない、という原則の検証。
+    // UoW-G の ControlsUI は Renderer に依存しないため縮退時も構築されるが（本ユニットのスコープ外）、
+    // options.controls: false でヘッドレスにすればその追加分も含め container は無変更のままとなる。
     mockWebGL2Support(false);
     const container = document.createElement("div");
 
-    createViewer(container);
+    createViewer(container, { controls: false });
     await flushMicrotasks();
 
     expect(container.children).toHaveLength(0);

@@ -1,6 +1,7 @@
 import type { PhotoInput } from "../gallery/types.js";
 import type { ImageInput, ImageSourceAdapter } from "../loader/types.js";
 import type { InputSource, Keymap } from "../interaction/types.js";
+import type { ControlsVisibility, UITextMap } from "../ui/types.js";
 import type { ViewerMode } from "./ViewerMode.js";
 
 /**
@@ -101,6 +102,8 @@ export interface ZoomChangeEvent {
 export interface PhotoChangeEvent {
   type: "photochange";
   index: number;
+  /** 設定済み写真の総数（UoW-G、BR-G-07）。`progress: { loaded, total }` と同じペイロード設計。 */
+  total: number;
   id?: string;
 }
 
@@ -127,8 +130,16 @@ export interface ViewerEventMap {
 
 export type ViewerEventType = keyof ViewerEventMap;
 
-/** {@link createViewer} に渡すオプション。UoW-A 時点では予約のみ。 */
+/** {@link createViewer} に渡すオプション。 */
 export interface ViewerOptions {
+  /**
+   * 同梱コントロールの初期表示状態（UoW-G、FR-14）。`false` は完全ヘッドレス（`ControlsUI` 自体を
+   * 構築しない）、省略または `true` は全コントロール表示、部分オブジェクトは個別指定（未指定キーは
+   * 表示扱い）。
+   */
+  controls?: boolean | Partial<ControlsVisibility>;
+  /** 同梱 UI の初期文言・aria-label（UoW-G、FR-15）。構築後の変更は {@link ViewerHandle.setText}。 */
+  text?: Partial<UITextMap>;
   [key: string]: unknown;
 }
 
@@ -221,6 +232,19 @@ export interface ViewerHandle {
   exitFullscreen(): Promise<void>;
   /** 現在フルスクリーン表示中かどうかを返す（ネイティブ・擬似いずれも `true`）。 */
   isFullscreen(): boolean;
+
+  /**
+   * 同梱コントロールの表示/非表示を変更する（US-26）。現在の設定へ部分的にマージする
+   * （BR-G-02）。同梱 UI が構築されていない場合（ヘッドレス）は安全な no-op（BR-G-15）。
+   */
+  setControlsVisibility(config: Partial<ControlsVisibility>): void;
+  /**
+   * 同梱 UI の文言・aria-label を差し替える（US-27）。現在の文言へ部分的にマージする
+   * （BR-G-10）。同梱 UI が構築されていない場合（ヘッドレス）は安全な no-op（BR-G-15）。
+   */
+  setText(overrides: Partial<UITextMap>): void;
+  /** 設定済み写真の総数を返す（BR-G-07）。写真が一度も設定されていなければ `0`。 */
+  getPhotoCount(): number;
 
   /** ビューワーが保持するリソースを解放する。複数回呼び出しても安全（冪等）。 */
   dispose(): void;
