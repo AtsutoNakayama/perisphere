@@ -121,7 +121,18 @@
 - [x] Code Generation（成果物 `construction/plans/uow-g-code-generation-plan.md`（Step 2〜5,7 全完了）、`packages/core/src/ui/` 新規一式、`viewer/`（`types.ts`/`createViewer.ts`）・`index.ts` への拡張、`construction/uow-g/code/code-summary.md`。テスト31ファイル293件（UoW-A/B/C/D/E/F既存266件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green。計画からの逸脱2件（`ControlsUI`は縮退ハンドル〔WebGL2非対応〕でも実機能とする設計判断〔UoW-F FullscreenManagerの先例を踏襲〕、UoW-A の「縮退時container無変更」テストを`options.controls:false`明示のヘッドレス検証へ更新）を code-summary.md に記載。**ユーザー承認: 2026-08-04（事前の包括承認済み）**）
 - [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
 
-**UoW-G Per-Unit Loop 完了（2026-08-04）。素DOMによる同梱コントロールUI（フルスクリーン/ズーム/モード切替/写真前後/写真インジケーター）と、表示/非表示・スタイル・ヘッドレス・文言差し替えのAPI（setControlsVisibility/setText/ViewerOptions.controls/text）が完成。**
+**UoW-G Per-Unit Loop 完了（2026-08-04）。素DOMによる同梱コントロールUI（フルスクリーン/ズーム/モード切替/写真前後/写真インジケーター）と、表示/非表示・スタイル・ヘッドレス・文言差し替えのAPI（setControlsVisibility/setText/ViewerOptions.controls/text）が完成。PR #45 マージ・Issue #44 クローズ済み。main 同期済み。**
+
+#### UoW-H React アダプタ（[#46](https://github.com/AtsutoNakayama/perisphere/issues/46) / ブランチ `feat/46-uow-h-react`）
+
+- [x] Functional Design（Q1〜Q8 回答確定〔全て推奨案採用〕。成果物 `construction/uow-h/functional-design/`: domain-entities.md / business-rules.md / business-logic-model.md / frontend-components.md。`PerisphereHandle` は `ViewerHandle` の全量エイリアスとして確定（Inception の部分集合例示から拡張、保守負担回避が理由）。**ユーザー承認: 2026-08-04（包括承認・全て推奨案、PR作成まで自動承認）**）
+- [x] NFR Requirements（Q1〜Q5 回答確定〔全て推奨案採用〕。成果物 `construction/uow-h/nfr-requirements/`: nfr-requirements.md / tech-stack-decisions.md。React/react-dom peerDependencies `>=18.0.0 <20.0.0`（three.jsと同じ広めrange方針）、`@testing-library/react`・`eslint-plugin-react-hooks`を新規devDependency追加、PBT対象3関数（resolveInitialSource/extractViewerOptions/toCallbackPayload）確定。**ユーザー承認: 2026-08-04（包括承認）**）
+- [x] NFR Design（Q1〜Q3 回答確定〔全て推奨案採用〕。成果物 `construction/uow-h/nfr-design/`: nfr-design-patterns.md（RP-H-1 Silent Best-Effort Load・LC-H-1 純粋関数の独立モジュール化・LC-H-2 イベントブリッジは同一ファイル内、Rejected Patterns）/ logical-components.md（L1〜L5、`packages/react/src/` 構成: Perisphere.tsx/usePerisphere.ts/internal.ts/types.ts/index.ts）。**ユーザー承認: 2026-08-04（包括承認）**）
+- [x] Infrastructure Design（Q1=A で確定。成果物 `construction/uow-h/infrastructure-design/`: infrastructure-design.md / deployment-architecture.md。新規パッケージ `packages/react` は既存の `pnpm-workspace.yaml` グロブ・CI・Dependabot で変更なく自動カバー。**ユーザー承認: 2026-08-04（包括承認）**）
+- [x] Code Generation（成果物 `construction/plans/uow-h-code-generation-plan.md`（Step 1〜5,7 全完了）、新規パッケージ `packages/react`（`@perisphere/react`）一式、`construction/uow-h/code/code-summary.md`。テスト34ファイル322件（core側UoW-A〜G既存293件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green（`packages/core/dist`/`packages/react/dist` 削除状態でのtest greenも確認、CIのtestジョブがbuildを事前実行しないことへの対応）。計画からの逸脱8件（`forwardRef`+索引シグネチャによる型崩壊の発見・回避〔名前付き関数化〕、ref公開をProxy遅延委譲に変更〔useImperativeHandleの実行順序バグ修正〕、イベント型をViewerEventMapインデックスアクセスで表現、vitest.config.tsに`@perisphere/core`ソースエイリアス追加、テストは`@perisphere/core`をモック境界にする方針、`propsRef`代入をuseEffect内へ移動〔eslint-plugin-react-hooks@7のreact-hooks/refsルール対応〕、`onReady`を引数なしで呼ぶよう分岐、`packages/react/.prettierignore`追加）を code-summary.md に記載。**ユーザー承認: 2026-08-04（事前の包括承認済み）**）
+- [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
+
+**UoW-H Per-Unit Loop 完了（2026-08-04）。`@perisphere/react` パッケージ（`Perisphere` コンポーネント・`usePerisphere` フック・`PerisphereHandle` ref 命令ハンドル）が完成。全 In MVP ユニット（UoW-A〜H）のコード生成完了。**
 
 ## Notes
 
