@@ -132,7 +132,7 @@
 - [x] Code Generation（成果物 `construction/plans/uow-h-code-generation-plan.md`（Step 1〜5,7 全完了）、新規パッケージ `packages/react`（`@perisphere/react`）一式、`construction/uow-h/code/code-summary.md`。テスト34ファイル322件（core側UoW-A〜G既存293件含む）green、`pnpm -r build/test/lint`・`pnpm audit --prod` 全て green（`packages/core/dist`/`packages/react/dist` 削除状態でのtest greenも確認、CIのtestジョブがbuildを事前実行しないことへの対応）。計画からの逸脱8件（`forwardRef`+索引シグネチャによる型崩壊の発見・回避〔名前付き関数化〕、ref公開をProxy遅延委譲に変更〔useImperativeHandleの実行順序バグ修正〕、イベント型をViewerEventMapインデックスアクセスで表現、vitest.config.tsに`@perisphere/core`ソースエイリアス追加、テストは`@perisphere/core`をモック境界にする方針、`propsRef`代入をuseEffect内へ移動〔eslint-plugin-react-hooks@7のreact-hooks/refsルール対応〕、`onReady`を引数なしで呼ぶよう分岐、`packages/react/.prettierignore`追加）を code-summary.md に記載。**ユーザー承認: 2026-08-04（事前の包括承認済み）**）
 - [ ] Build and Test（全ユニット共通、最後にまとめて実施のため保留）
 
-**UoW-H Per-Unit Loop 完了（2026-08-04）。`@perisphere/react` パッケージ（`Perisphere` コンポーネント・`usePerisphere` フック・`PerisphereHandle` ref 命令ハンドル）が完成。全 In MVP ユニット（UoW-A〜H）のコード生成完了。**
+**UoW-H Per-Unit Loop 完了（2026-08-04）。`@perisphere/react` パッケージ（`Perisphere` コンポーネント・`usePerisphere` フック・`PerisphereHandle` ref 命令ハンドル）が完成。全 In MVP ユニット（UoW-A〜H）のコード生成完了。PR [#48](https://github.com/AtsutoNakayama/perisphere/pull/48) 作成・CI（Build/Lint/Test/Markdown lint/Link check）全て green（マージ・Issue #46 クローズは未実施）。**
 
 ## Notes
 
