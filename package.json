@@ -13,7 +13,7 @@
     "lint": "pnpm -r lint"
   },
   "devDependencies": {
-    "eslint": "10.8.0",
+    "eslint": "10.8.1",
     "@eslint/js": "10.0.1",
     "typescript-eslint": "8.65.0",
     "eslint-config-prettier": "10.1.8",
