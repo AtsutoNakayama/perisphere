@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
       # 自分たちが書く Markdown のみ検証する。ベンダー管理の AI-DLC 文書（instructions/AIDLC.md
       # および .aidlc-rule-details/）は対象外。
-      - uses: DavidAnson/markdownlint-cli2-action@v16
+      - uses: DavidAnson/markdownlint-cli2-action@v24
         with:
           globs: |
             README.md
